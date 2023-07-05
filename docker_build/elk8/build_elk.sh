@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #docker compose down -v --rmi all
-docker stop $(docker ps -aq)
+#docker stop $(docker ps -aq)
 docker rm -f $(docker ps -aq)
 docker rmi -f $(docker images -aq)
 
@@ -29,7 +29,7 @@ mkdir -p $ES_FOLDER/node-2/logs
 mkdir -p $ES_FOLDER/node-3/data
 mkdir -p $ES_FOLDER/node-3/logs
 
-docker-compose up -d
+docker compose up -d
 echo
 echo ===========================================================
 echo 
