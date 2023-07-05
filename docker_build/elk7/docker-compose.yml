@@ -1,0 +1,136 @@
+version: "3.8"
+services:
+  es-node-1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION}
+    container_name: es-node-1
+    hostname: es-node-1
+    restart: unless-stopped    
+    volumes:
+      - type: bind
+        source: ${ES_FOLDER}/node-data-1
+        target: /usr/share/elasticsearch/data
+        read_only: false
+    #  - type: bind
+    #    source: ./elasticsearch/elasticsearch.yml
+    #    target: /usr/share/elasticsearch/config/elasticsearch.yml
+    #    read_only: true
+      #- ${ELASTICSEARCH_DATA:-/data}/es-node-1:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - cluster.name=es-cluster
+      - node.name=es-node-1
+      - discovery.seed_hosts=es-node-2,es-node-3
+      - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
+      - bootstrap.memory_lock=true
+      - xpack.license.self_generated.type=basic
+      - xpack.monitoring.collection.enabled=true 
+      - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://es-node-1:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 30          
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    
+
+  es-node-2:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION}        
+    container_name: es-node-2
+    hostname: es-node-2
+    restart: unless-stopped       
+    volumes:
+      - type: bind
+        source: ${ES_FOLDER}/node-data-2
+        target: /usr/share/elasticsearch/data
+        read_only: false       
+    #volumes:
+    #  - type: bind
+    #    source: ./elasticsearch/elasticsearch.yml
+    #    target: /usr/share/elasticsearch/config/elasticsearch.yml
+    #    read_only: true
+      #- ${ELASTICSEARCH_DATA:-/data}/es-node-2:/usr/share/elasticsearch/data
+    ports:
+      - "9202:9200"
+      - "9302:9300"      
+    environment:
+      - cluster.name=es-cluster
+      - node.name=es-node-2
+      - discovery.seed_hosts=es-node-1,es-node-3
+      - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
+      - bootstrap.memory_lock=true
+      - xpack.license.self_generated.type=basic
+      - xpack.monitoring.collection.enabled=true        
+      - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://es-node-2:9202"]
+      interval: 30s
+      timeout: 10s
+      retries: 30         
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  es-node-3:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION}        
+    container_name: es-node-3
+    hostname: es-node-3
+    restart: unless-stopped       
+    volumes:
+      - type: bind
+        source: ${ES_FOLDER}/node-data-3
+        target: /usr/share/elasticsearch/data
+        read_only: false        
+    #volumes:
+    #  - type: bind
+    #    source: ./elasticsearch/elasticsearch.yml
+    #    target: /usr/share/elasticsearch/config/elasticsearch.yml
+    #    read_only: true
+      #- ${ELASTICSEARCH_DATA:-/data}/es-node-2:/usr/share/elasticsearch/data
+    ports:
+      - "9203:9200"
+      - "9303:9300"           
+    environment:
+      - cluster.name=es-cluster
+      - node.name=es-node-3
+      - discovery.seed_hosts=es-node-1,es-node-2
+      - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
+      - bootstrap.memory_lock=true
+      - xpack.license.self_generated.type=basic
+      - xpack.monitoring.collection.enabled=true
+      - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://es-node-3:9203"]
+      interval: 30s
+      timeout: 10s
+      retries: 30      
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELK_VERSION}
+    container_name: kibana
+    environment:
+      - 'ELASTICSEARCH_HOSTS=["http://es-node-1:9200","http://es-node-2:9202","http://es-node-3:9203"]'
+      - csp.strict=false
+    #volumes:
+    #  - type: bind
+    #    source: ./kibana/kibana.yml
+    #    target: /usr/share/kibana/config/kibana.yml
+    #    read_only: true
+    ports:
+      - 5601:5601
+    depends_on:
+      - es-node-1
+      - es-node-2
+      - es-node-3
+
+ 
+
