@@ -7,14 +7,13 @@ services:
     restart: unless-stopped    
     volumes:
       - type: bind
-        source: ${ES_FOLDER}/node-data-1
+        source: ${ES_FOLDER}/node-1/data
         target: /usr/share/elasticsearch/data
         read_only: false
-    #  - type: bind
-    #    source: ./elasticsearch/elasticsearch.yml
-    #    target: /usr/share/elasticsearch/config/elasticsearch.yml
-    #    read_only: true
-      #- ${ELASTICSEARCH_DATA:-/data}/es-node-1:/usr/share/elasticsearch/data
+      - type: bind
+        source: ${ES_FOLDER}/node-1/logs
+        target: /usr/share/elasticsearch/logs
+        read_only: false        
     ports:
       - "9200:9200"
       - "9300:9300"
@@ -45,15 +44,13 @@ services:
     restart: unless-stopped       
     volumes:
       - type: bind
-        source: ${ES_FOLDER}/node-data-2
+        source: ${ES_FOLDER}/node-2/data
         target: /usr/share/elasticsearch/data
-        read_only: false       
-    #volumes:
-    #  - type: bind
-    #    source: ./elasticsearch/elasticsearch.yml
-    #    target: /usr/share/elasticsearch/config/elasticsearch.yml
-    #    read_only: true
-      #- ${ELASTICSEARCH_DATA:-/data}/es-node-2:/usr/share/elasticsearch/data
+        read_only: false
+      - type: bind
+        source: ${ES_FOLDER}/node-2/logs
+        target: /usr/share/elasticsearch/logs
+        read_only: false    
     ports:
       - "9202:9200"
       - "9302:9300"      
@@ -83,15 +80,13 @@ services:
     restart: unless-stopped       
     volumes:
       - type: bind
-        source: ${ES_FOLDER}/node-data-3
+        source: ${ES_FOLDER}/node-3/data
         target: /usr/share/elasticsearch/data
-        read_only: false        
-    #volumes:
-    #  - type: bind
-    #    source: ./elasticsearch/elasticsearch.yml
-    #    target: /usr/share/elasticsearch/config/elasticsearch.yml
-    #    read_only: true
-      #- ${ELASTICSEARCH_DATA:-/data}/es-node-2:/usr/share/elasticsearch/data
+        read_only: false
+      - type: bind
+        source: ${ES_FOLDER}/node-3/logs
+        target: /usr/share/elasticsearch/logs
+        read_only: false    
     ports:
       - "9203:9200"
       - "9303:9300"           
@@ -117,14 +112,10 @@ services:
   kibana:
     image: docker.elastic.co/kibana/kibana:${ELK_VERSION}
     container_name: kibana
+    hostname: kibana
     environment:
       - 'ELASTICSEARCH_HOSTS=["http://es-node-1:9200","http://es-node-2:9202","http://es-node-3:9203"]'
       - csp.strict=false
-    #volumes:
-    #  - type: bind
-    #    source: ./kibana/kibana.yml
-    #    target: /usr/share/kibana/config/kibana.yml
-    #    read_only: true
     ports:
       - 5601:5601
     depends_on:
@@ -133,4 +124,3 @@ services:
       - es-node-3
 
  
-

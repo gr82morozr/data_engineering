@@ -13,13 +13,16 @@ export ELK_VERSION=7.17.1
 
 export ES_FOLDER=$PWD
 
-rm -fr $ES_FOLDER/node-data-1
-rm -fr $ES_FOLDER/node-data-2
-rm -fr $ES_FOLDER/node-data-3
+rm -fr $ES_FOLDER/node-1
+rm -fr $ES_FOLDER/node-2
+rm -fr $ES_FOLDER/node-3
 
-mkdir -p $ES_FOLDER/node-data-1
-mkdir -p $ES_FOLDER/node-data-2
-mkdir -p $ES_FOLDER/node-data-3
+mkdir -p $ES_FOLDER/node-1/data
+mkdir -p $ES_FOLDER/node-1/logs
+mkdir -p $ES_FOLDER/node-2/data
+mkdir -p $ES_FOLDER/node-2/logs
+mkdir -p $ES_FOLDER/node-3/data
+mkdir -p $ES_FOLDER/node-3/logs
 
 docker compose up -d
 
