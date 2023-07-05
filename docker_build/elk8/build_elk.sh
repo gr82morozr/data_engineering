@@ -9,7 +9,15 @@ if [ "$max_map_count" -ne 262144 ]; then
   sudo sysctl -w vm.max_map_count=262144
 fi
 
+export ELK_VERSION=8.8.1
 export ES_FOLDER=$PWD
+export ELASTIC_PASSWORD=password
+export KIBANA_PASSWORD=password
+export CLUSTER_NAME=elk8-cluster
+export LICENSE=basic
+export ES_PORT=9200
+export KIBANA_PORT=5601
+export MEM_LIMIT=2147483648
 
 rm -fr $ES_FOLDER/node-1
 rm -fr $ES_FOLDER/node-2

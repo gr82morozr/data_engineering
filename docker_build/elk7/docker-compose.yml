@@ -18,7 +18,7 @@ services:
       - "9200:9200"
       - "9300:9300"
     environment:
-      - cluster.name=es-cluster
+      - cluster.name=es7-cluster
       - node.name=es-node-1
       - discovery.seed_hosts=es-node-2,es-node-3
       - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
@@ -55,7 +55,7 @@ services:
       - "9202:9200"
       - "9302:9300"      
     environment:
-      - cluster.name=es-cluster
+      - cluster.name=es7-cluster
       - node.name=es-node-2
       - discovery.seed_hosts=es-node-1,es-node-3
       - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
@@ -91,7 +91,7 @@ services:
       - "9203:9200"
       - "9303:9300"           
     environment:
-      - cluster.name=es-cluster
+      - cluster.name=es7-cluster
       - node.name=es-node-3
       - discovery.seed_hosts=es-node-1,es-node-2
       - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
