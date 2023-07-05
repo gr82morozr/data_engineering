@@ -1,8 +1,6 @@
 #!/bin/bash
 
-docker stop $(docker ps -aq)
-docker rm -f $(docker ps -aq)
-docker rmi -f $(docker images -aq)
+docker compose down -v --rmi all
 
 max_map_count=$(cat /proc/sys/vm/max_map_count)
 if [ "$max_map_count" -ne 262144 ]; then
@@ -15,8 +13,6 @@ export ELASTIC_PASSWORD=password
 export KIBANA_PASSWORD=password
 export CLUSTER_NAME=elk8-cluster
 export LICENSE=basic
-export ES_PORT=9200
-export KIBANA_PORT=5601
 export MEM_LIMIT=2147483648
 
 rm -fr $ES_FOLDER/node-1
@@ -32,6 +28,7 @@ mkdir -p $ES_FOLDER/node-3/logs
 
 docker-compose up -d
 
+echo https://<ELK_CLUSTER_IP>:9200
 
 # password=""
 

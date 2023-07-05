@@ -1,8 +1,6 @@
 #!/bin/bash
 
-docker stop $(docker ps -aq)
-docker rm -f $(docker ps -aq)
-docker rmi -f $(docker images -aq)
+docker compose down -v --rmi all
 
 max_map_count=$(cat /proc/sys/vm/max_map_count)
 if [ "$max_map_count" -ne 262144 ]; then
@@ -10,7 +8,6 @@ if [ "$max_map_count" -ne 262144 ]; then
 fi
 
 export ELK_VERSION=7.17.1
-
 export ES_FOLDER=$PWD
 
 rm -fr $ES_FOLDER/node-1
