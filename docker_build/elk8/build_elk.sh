@@ -1,6 +1,9 @@
 #!/bin/bash
 
-docker compose down -v --rmi all
+#docker compose down -v --rmi all
+docker stop $(docker ps -aq)
+docker rm -f $(docker ps -aq)
+docker rmi -f $(docker images -aq)
 
 max_map_count=$(cat /proc/sys/vm/max_map_count)
 if [ "$max_map_count" -ne 262144 ]; then
@@ -27,14 +30,22 @@ mkdir -p $ES_FOLDER/node-3/data
 mkdir -p $ES_FOLDER/node-3/logs
 
 docker-compose up -d
-
-echo https://<ELK_CLUSTER_IP>:9200
+echo
+echo ===========================================================
+echo 
+echo Elasticsearch : https://[ELK_CLUSTER_IP]:9200
+echo  elastic/$ELASTIC_PASSWORD
+echo
+echo Kibana : https://[ELK_CLUSTER_IP]:5601
+echo  elastic/$KIBANA_PASSWORD
+echo 
+echo ===========================================================
 
 # password=""
 
 # while [ -z "$password" ]; do
 #     sleep 3
-#     output=$(docker exec -it es-node-1 /usr/share/elasticsearch/bin/elasticsearch-reset-password -u elastic -b)
+#     output=$(docker exec -it es8-node-1 /usr/share/elasticsearch/bin/elasticsearch-reset-password -u elastic -b)
 #     password=$(echo "$output" | grep -oP 'New value: \K.*')
 #     #echo "[elastic] password: $password"
 # done

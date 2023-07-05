@@ -65,13 +65,14 @@ services:
 
   es-node-1:
     depends_on:
-      setup:
-        condition: service_healthy
+      - setup
     image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION}
-    container_name: es-node-1            
+    container_name: es-node-1
+    hostname: es-node-1
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
-      - esdata01:/usr/share/elasticsearch/data
+      - ${ES_FOLDER}/node-1/data:/usr/share/elasticsearch/data
+      - ${ES_FOLDER}/node-1/logs:/usr/share/elasticsearch/logs
     ports:
       - 9200:9200
     environment:
@@ -112,9 +113,11 @@ services:
       - es-node-1
     image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION}
     container_name: es-node-2
+    hostname: es-node-2
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
-      - esdata02:/usr/share/elasticsearch/data
+      - ${ES_FOLDER}/node-2/data:/usr/share/elasticsearch/data
+      - ${ES_FOLDER}/node-2/logs:/usr/share/elasticsearch/logs
     environment:
       - node.name=es-node-2
       - cluster.name=${CLUSTER_NAME}
@@ -151,10 +154,12 @@ services:
     depends_on:
       - es-node-2
     image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION}
-    container_name: es-node-3    
+    container_name: es-node-3
+    hostname: es-node-3
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
-      - esdata03:/usr/share/elasticsearch/data
+      - ${ES_FOLDER}/node-3/data:/usr/share/elasticsearch/data
+      - ${ES_FOLDER}/node-3/logs:/usr/share/elasticsearch/logs
     environment:
       - node.name=es-node-3
       - cluster.name=${CLUSTER_NAME}
@@ -189,14 +194,12 @@ services:
 
   kibana:
     depends_on:
-      es-node-1:
-        condition: service_healthy
-      es-node-2:
-        condition: service_healthy
-      es-node-3:
-        condition: service_healthy
+      - es-node-1
+      - es-node-2
+      - es-node-3
     image: docker.elastic.co/kibana/kibana:${ELK_VERSION}
     container_name: kibana
+    hostname: kibana
     volumes:
       - certs:/usr/share/kibana/config/certs
       - kibanadata:/usr/share/kibana/data
@@ -221,12 +224,6 @@ services:
 
 volumes:
   certs:
-    driver: local
-  esdata01:
-    driver: local
-  esdata02:
-    driver: local
-  esdata03:
     driver: local
   kibanadata:
     driver: local
