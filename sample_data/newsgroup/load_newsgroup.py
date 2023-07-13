@@ -14,7 +14,7 @@ HEADERS = { 'Content-Type': 'application/json'  }
 
 def get_config() :
   config = {
-    "DATA_FILE"   : "../data/newsgroup.zip", 
+    "DATA_FILE"   : "./newsgroup.zip", 
     "ES_HOST"     : "https://localhost:9200",
     "ES_USERNAME" : "elastic",
     "ES_PASSWORD" : "password",
