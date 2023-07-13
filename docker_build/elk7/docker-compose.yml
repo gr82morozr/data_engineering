@@ -7,18 +7,18 @@ services:
     restart: unless-stopped    
     volumes:
       - type: bind
-        source: ${ES_FOLDER}/node-1/data
+        source: ${ES_FOLDER}/${ELK_CLUSTER}/node-1/data
         target: /usr/share/elasticsearch/data
         read_only: false
       - type: bind
-        source: ${ES_FOLDER}/node-1/logs
+        source: ${ES_FOLDER}/${ELK_CLUSTER}/node-1/logs
         target: /usr/share/elasticsearch/logs
         read_only: false        
     ports:
       - "9200:9200"
       - "9300:9300"
     environment:
-      - cluster.name=es7-cluster
+      - cluster.name=${ELK_CLUSTER}
       - node.name=es-node-1
       - discovery.seed_hosts=es-node-2,es-node-3
       - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
@@ -44,18 +44,18 @@ services:
     restart: unless-stopped       
     volumes:
       - type: bind
-        source: ${ES_FOLDER}/node-2/data
+        source: ${ES_FOLDER}/${ELK_CLUSTER}/node-2/data
         target: /usr/share/elasticsearch/data
         read_only: false
       - type: bind
-        source: ${ES_FOLDER}/node-2/logs
+        source: ${ES_FOLDER}/${ELK_CLUSTER}/node-2/logs
         target: /usr/share/elasticsearch/logs
         read_only: false    
     ports:
       - "9202:9200"
       - "9302:9300"      
     environment:
-      - cluster.name=es7-cluster
+      - cluster.name=${ELK_CLUSTER}
       - node.name=es-node-2
       - discovery.seed_hosts=es-node-1,es-node-3
       - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
@@ -80,18 +80,18 @@ services:
     restart: unless-stopped       
     volumes:
       - type: bind
-        source: ${ES_FOLDER}/node-3/data
+        source: ${ES_FOLDER}/${ELK_CLUSTER}/node-3/data
         target: /usr/share/elasticsearch/data
         read_only: false
       - type: bind
-        source: ${ES_FOLDER}/node-3/logs
+        source: ${ES_FOLDER}/${ELK_CLUSTER}/node-3/logs
         target: /usr/share/elasticsearch/logs
         read_only: false    
     ports:
       - "9203:9200"
       - "9303:9300"           
     environment:
-      - cluster.name=es7-cluster
+      - cluster.name=${ELK_CLUSTER}
       - node.name=es-node-3
       - discovery.seed_hosts=es-node-1,es-node-2
       - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3

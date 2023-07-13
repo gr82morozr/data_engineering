@@ -47,14 +47,19 @@ services:
           bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
           unzip config/certs/certs.zip -d config/certs;
         fi;
-        echo "Setting file permissions"
+
+        echo "Setting file permissions ...";
         chown -R root:root config/certs;
-        find . -type d -exec chmod 750 \{\} \;;
+        
+        find . -type d -exec chmod 777 \{\} \;;
         find . -type f -exec chmod 640 \{\} \;;
-        echo "Waiting for Elasticsearch availability";
+        
+        echo "Waiting for Elasticsearch availability ...";
         until curl -s --cacert config/certs/ca/ca.crt https://es-node-1:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
-        echo "Setting kibana_system password";
+
+        echo "Setting kibana_system password ...";
         until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD}" -H "Content-Type: application/json" https://es-node-1:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
+
         echo "All done!";
       '
     healthcheck:
@@ -71,8 +76,8 @@ services:
     hostname: es-node-1
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
-      - ${ES_FOLDER}/node-1/data:/usr/share/elasticsearch/data
-      - ${ES_FOLDER}/node-1/logs:/usr/share/elasticsearch/logs
+      - es_node1_data:/usr/share/elasticsearch/data
+      - es_node1_logs:/usr/share/elasticsearch/logs
     ports:
       - 9200:9200
     environment:
@@ -83,6 +88,7 @@ services:
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
       - bootstrap.memory_lock=true
       - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
       - xpack.security.http.ssl.enabled=true
       - xpack.security.http.ssl.key=certs/es-node-1/es-node-1.key
       - xpack.security.http.ssl.certificate=certs/es-node-1/es-node-1.crt
@@ -116,8 +122,8 @@ services:
     hostname: es-node-2
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
-      - ${ES_FOLDER}/node-2/data:/usr/share/elasticsearch/data
-      - ${ES_FOLDER}/node-2/logs:/usr/share/elasticsearch/logs
+      - es_node2_data:/usr/share/elasticsearch/data
+      - es_node2_logs:/usr/share/elasticsearch/logs
     environment:
       - node.name=es-node-2
       - cluster.name=${CLUSTER_NAME}
@@ -125,6 +131,7 @@ services:
       - discovery.seed_hosts=es-node-1,es-node-3
       - bootstrap.memory_lock=true
       - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
       - xpack.security.http.ssl.enabled=true
       - xpack.security.http.ssl.key=certs/es-node-2/es-node-2.key
       - xpack.security.http.ssl.certificate=certs/es-node-2/es-node-2.crt
@@ -158,8 +165,8 @@ services:
     hostname: es-node-3
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
-      - ${ES_FOLDER}/node-3/data:/usr/share/elasticsearch/data
-      - ${ES_FOLDER}/node-3/logs:/usr/share/elasticsearch/logs
+      - es_node3_data:/usr/share/elasticsearch/data
+      - es_node3_logs:/usr/share/elasticsearch/logs
     environment:
       - node.name=es-node-3
       - cluster.name=${CLUSTER_NAME}
@@ -167,6 +174,7 @@ services:
       - discovery.seed_hosts=es-node-1,es-node-2
       - bootstrap.memory_lock=true
       - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
       - xpack.security.http.ssl.enabled=true
       - xpack.security.http.ssl.key=certs/es-node-3/es-node-3.key
       - xpack.security.http.ssl.certificate=certs/es-node-3/es-node-3.crt
@@ -177,6 +185,7 @@ services:
       - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
       - xpack.security.transport.ssl.verification_mode=certificate
       - xpack.license.self_generated.type=${LICENSE}
+      
     mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -209,14 +218,14 @@ services:
       - SERVERNAME=kibana
       - ELASTICSEARCH_HOSTS=https://es-node-1:9200
       - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
       - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
     mem_limit: ${MEM_LIMIT}
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+          "curl -s -I https://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
         ]
       interval: 10s
       timeout: 10s
@@ -225,5 +234,55 @@ services:
 volumes:
   certs:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${CLUSTER_NAME}/config/certs
+  es_node1_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${CLUSTER_NAME}/es-node-1/data
+  es_node1_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${CLUSTER_NAME}/es-node-1/logs
+  es_node2_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${CLUSTER_NAME}/es-node-2/data
+  es_node2_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${CLUSTER_NAME}/es-node-2/logs  
+  es_node3_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${CLUSTER_NAME}/es-node-3/data
+  es_node3_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${CLUSTER_NAME}/es-node-3/logs
   kibanadata:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${CLUSTER_NAME}/kibana/data
+  esagentdata:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${CLUSTER_NAME}/esagent/data

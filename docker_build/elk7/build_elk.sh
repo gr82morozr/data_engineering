@@ -7,23 +7,26 @@ if [ "$max_map_count" -ne 262144 ]; then
   sudo sysctl -w vm.max_map_count=262144
 fi
 
-export ELK_VERSION=7.17.1
-export ES_FOLDER=$PWD
+# - generate .env
+cat << EOF > .env
+ELK_VERSION=7.17.1
+ELK_CLUSTER=es7-cluster
+ES_FOLDER=$PWD
+EOF
+source .env
 
-rm -fr $ES_FOLDER/node-1
-rm -fr $ES_FOLDER/node-2
-rm -fr $ES_FOLDER/node-3
 
-mkdir -p $ES_FOLDER/node-1/data
-mkdir -p $ES_FOLDER/node-1/logs
-mkdir -p $ES_FOLDER/node-2/data
-mkdir -p $ES_FOLDER/node-2/logs
-mkdir -p $ES_FOLDER/node-3/data
-mkdir -p $ES_FOLDER/node-3/logs
+rm -fr $ES_FOLDER/$ELK_CLUSTER
+
+mkdir -p $ES_FOLDER/$ELK_CLUSTER/node-1/data
+mkdir -p $ES_FOLDER/$ELK_CLUSTER/node-1/logs
+mkdir -p $ES_FOLDER/$ELK_CLUSTER/node-2/data
+mkdir -p $ES_FOLDER/$ELK_CLUSTER/node-2/logs
+mkdir -p $ES_FOLDER/$ELK_CLUSTER/node-3/data
+mkdir -p $ES_FOLDER/$ELK_CLUSTER/node-3/logs
 
 docker compose up -d
 
-docker compose up -d
 echo
 echo ===========================================================
 echo 
