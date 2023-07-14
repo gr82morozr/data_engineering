@@ -16,7 +16,7 @@ docker compose down -v
 
 # - generate .env
 cat << EOF > .env
-ELK_VERSION=8.8.1
+ELK_VERSION=8.8.2
 ES_FOLDER=$PWD
 CLUSTER_NAME=elk8-cluster
 ELASTIC_PASSWORD=password
