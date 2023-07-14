@@ -1,18 +1,13 @@
 #!/bin/bash
 
-check_result() {
-  # Check if the command failed
-  if [ $? -ne 0 ]; then
-    echo "script failed, exiting."
-    exit 1
-  fi
-}
-
 
 
 # bring down services
 # docker compose down -v --rmi all
-docker compose down -v 
+docker compose down --volumes --remove-orphans
+
+
+check_and_stop_container filebeat
 
 # - generate .env
 cat << EOF > .env
@@ -67,13 +62,24 @@ echo ===========================================================
 docker logs -f setup
 
 
-# password=""
+# ====================================================
 
-# while [ -z "$password" ]; do
-#     sleep 3
-#     output=$(docker exec -it es8-node-1 /usr/share/elasticsearch/bin/elasticsearch-reset-password -u elastic -b)
-#     password=$(echo "$output" | grep -oP 'New value: \K.*')
-#     #echo "[elastic] password: $password"
-# done
+check_result() {
+  # Check if the command failed
+  if [ $? -ne 0 ]; then
+    echo "script failed, exiting."
+    exit 1
+  fi
+}
 
-# echo "[elastic] password: $password"
+check_and_stop_container() {
+  local container_name="$1"
+
+  if [[ "$(docker inspect -f '{{.State.Running}}' "$container_name" 2>/dev/null)" == "true" ]]; then
+    echo "Container $container_name is running. Shutting it down..."
+    docker stop "$container_name"
+  else
+    echo "Container $container_name is not running."
+  fi
+}
+
