@@ -2,8 +2,8 @@ source ../.env
 
 # clean up folders
 rm -fr ./temp
-mkdir temp
-unzip ../../../sample_data/nasa_apache_access/nasa_apache_access.zip -d ./temp
+mkdir -p ./temp/apache
+unzip ../../../sample_data/nasa_apache_access/nasa_apache_access.zip -d ./temp/apache
 
 filebeat_image=filebeat:${ELK_VERSION}
 

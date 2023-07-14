@@ -11,6 +11,41 @@
 # configuration file.
 
 # ============================== Filebeat inputs ===============================
+filebeat.modules:
+#-------------------------------- Apache Module --------------------------------
+- module: apache
+  # Access logs
+  access:
+    enabled: true
+    var.paths: ["/usr/share/filebeat/input_data/apache/*.*"]
+
+#- module: apache
+  # Access logs
+  #access:
+    #enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+
+    # Input configuration (advanced). Any input configuration option
+    # can be added under this section.
+    #input:
+
+  # Error logs
+  #error:
+    #enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+
+    # Input configuration (advanced). Any input configuration option
+    # can be added under this section.
+    #input:
+
+
+
 
 filebeat.inputs:
 
@@ -25,7 +60,7 @@ filebeat.inputs:
   id: my-filestream-id
 
   # Change to true to enable this input configuration.
-  enabled: true
+  enabled: false
 
   # Paths that should be crawled and fetched. Glob based paths.
   paths:
