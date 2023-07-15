@@ -22,16 +22,6 @@ check_and_stop_container() {
 }
 # ====================================================
 
-
-
-# bring down services
-check_and_stop_container filebeat
-check_and_stop_container fleet
-docker compose down --volumes --remove-orphans
-
-
-
-
 # - generate .env
 cat << EOF > .env
 ELK_VERSION=8.8.2
@@ -42,6 +32,16 @@ KIBANA_PASSWORD=password
 LICENSE=basic
 MEM_LIMIT=2147483648
 EOF
+
+
+# bring down services
+check_and_stop_container filebeat
+check_and_stop_container fleet
+docker compose down --volumes --remove-orphans
+
+
+
+
 
 source ./.env
 

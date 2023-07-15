@@ -1,3 +1,8 @@
+
+#!/usr/bin/bash
+
+timestamp=$(date +'%Y-%m-%d_%H%M%S')
+
 source ../.env
 
 # clean up folders
@@ -12,10 +17,13 @@ docker build --build-arg ELK_VERSION=${ELK_VERSION} -t $filebeat_image  .
 
 docker run --name filebeat --network=elk8_elk_network -v ./temp:/usr/share/filebeat/input_data -d ${filebeat_image} 
 
-#docker cp $(docker create ${filebeat_image}):/usr/share/filebeat/filebeat.reference.yml .
+# backup files for reference
+docker cp filebeat:/usr/share/filebeat/filebeat.reference.yml .
+docker cp filebeat:/usr/share/filebeat/fields.yml   .
+
+
 
 filebeat_exec="docker exec filebeat /usr/share/filebeat/filebeat "
-
 
 echo Checking config ...
 output=$($filebeat_exec test config)
