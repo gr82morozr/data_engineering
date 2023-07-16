@@ -7,17 +7,19 @@ services:
     restart: unless-stopped    
     volumes:
       - type: bind
-        source: ${ES_FOLDER}/${CLUSTER_NAME}/es-node-1/data
+        source: ${ES_FOLDER}/${ES_CLUSTER}/es-node-1/data
         target: /usr/share/elasticsearch/data
         read_only: false
       - type: bind
-        source: ${ES_FOLDER}/${CLUSTER_NAME}/es-node-1/logs
+        source: ${ES_FOLDER}/${ES_CLUSTER}/es-node-1/logs
         target: /usr/share/elasticsearch/logs
         read_only: false        
     networks:
       - elk_network
+    ports:
+      - 9200:9200
     environment:
-      - cluster.name=${CLUSTER_NAME}
+      - cluster.name=${ES_CLUSTER}
       - node.name=es-node-1
       - discovery.seed_hosts=es-node-2,es-node-3
       - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
@@ -43,17 +45,17 @@ services:
     restart: unless-stopped       
     volumes:
       - type: bind
-        source: ${ES_FOLDER}/${CLUSTER_NAME}/es-node-2/data
+        source: ${ES_FOLDER}/${ES_CLUSTER}/es-node-2/data
         target: /usr/share/elasticsearch/data
         read_only: false
       - type: bind
-        source: ${ES_FOLDER}/${CLUSTER_NAME}/es-node-2/logs
+        source: ${ES_FOLDER}/${ES_CLUSTER}/es-node-2/logs
         target: /usr/share/elasticsearch/logs
         read_only: false    
     networks:
       - elk_network
     environment:
-      - cluster.name=${CLUSTER_NAME}
+      - cluster.name=${ES_CLUSTER}
       - node.name=es-node-2
       - discovery.seed_hosts=es-node-1,es-node-3
       - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
@@ -78,17 +80,17 @@ services:
     restart: unless-stopped       
     volumes:
       - type: bind
-        source: ${ES_FOLDER}/${CLUSTER_NAME}/es-node-3/data
+        source: ${ES_FOLDER}/${ES_CLUSTER}/es-node-3/data
         target: /usr/share/elasticsearch/data
         read_only: false
       - type: bind
-        source: ${ES_FOLDER}/${CLUSTER_NAME}/es-node-3/logs
+        source: ${ES_FOLDER}/${ES_CLUSTER}/es-node-3/logs
         target: /usr/share/elasticsearch/logs
         read_only: false    
     networks:
       - elk_network
     environment:
-      - cluster.name=${CLUSTER_NAME}
+      - cluster.name=${ES_CLUSTER}
       - node.name=es-node-3
       - discovery.seed_hosts=es-node-1,es-node-2
       - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
@@ -112,11 +114,11 @@ services:
     hostname: kibana
     networks:
       - elk_network
-    environment:
-      - ELASTICSEARCH_HOSTS=[http://es-node-1:9200"]
-      - csp.strict=false
     ports:
       - 5601:5601
+    environment:
+      - ELASTICSEARCH_HOSTS=["http://es-node-1:9200"]
+      - csp.strict=false
     depends_on:
       - es-node-1
       - es-node-2

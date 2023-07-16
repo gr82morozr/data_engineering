@@ -26,7 +26,8 @@ check_and_stop_container() {
 cat << EOF > .env
 ELK_VERSION=7.17.11
 ES_FOLDER=$PWD
-CLUSTER_NAME=elk7-cluster
+ES_CLUSTER=elk7-cluster
+ES_HEAP_SIZE=2g
 LICENSE=basic
 MEM_LIMIT=2147483648
 EOF
@@ -52,19 +53,19 @@ fi
 
 
 # cleanup local folders
-rm -fr $ES_FOLDER/$CLUSTER_NAME
+rm -fr $ES_FOLDER/$ES_CLUSTER
 check_result
 
 # create local folders
-mkdir -p $ES_FOLDER/$CLUSTER_NAME/es-node-1/data
-mkdir -p $ES_FOLDER/$CLUSTER_NAME/es-node-1/logs
-mkdir -p $ES_FOLDER/$CLUSTER_NAME/es-node-2/data
-mkdir -p $ES_FOLDER/$CLUSTER_NAME/es-node-2/logs
-mkdir -p $ES_FOLDER/$CLUSTER_NAME/es-node-3/data
-mkdir -p $ES_FOLDER/$CLUSTER_NAME/es-node-3/logs
-mkdir -p $ES_FOLDER/$CLUSTER_NAME/kibana/data
-mkdir -p $ES_FOLDER/$CLUSTER_NAME/esagent/data
-mkdir -p $ES_FOLDER/$CLUSTER_NAME/config/certs
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-node-1/data
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-node-1/logs
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-node-2/data
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-node-2/logs
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-node-3/data
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-node-3/logs
+mkdir -p $ES_FOLDER/$ES_CLUSTER/kibana/data
+mkdir -p $ES_FOLDER/$ES_CLUSTER/esagent/data
+mkdir -p $ES_FOLDER/$ES_CLUSTER/config/certs
 check_result
 
 docker compose up -d
