@@ -1,8 +1,6 @@
 #!/bin/bash
 
-
 # ====================================================
-
 check_result() {
   # Check if the command failed
   if [ $? -ne 0 ]; then
@@ -22,30 +20,30 @@ check_and_stop_container() {
 }
 # ====================================================
 
-# - generate .env
-cat << EOF > .env
-ELK_VERSION=8.8.2
-ES_FOLDER=$PWD
-ES_CLUSTER=elk8-cluster
-ELASTIC_PASSWORD=password
-KIBANA_PASSWORD=password
-ES_HEAP_SIZE=2g
-LICENSE=basic
-MEM_LIMIT=2147483648
-EOF
-
 
 # bring down services
+source ./.env
 check_and_stop_container filebeat
 check_and_stop_container fleet
 docker compose down --volumes --remove-orphans
+docker network prune -f
+docker volume prune -f
 
 
-
-
+# Generate the .env file
+source ./elk.env
+cat << EOF > ./.env
+ELK_VERSION=$ELK_VERSION
+ES_FOLDER=$ES_FOLDER
+ES_CLUSTER=$ES_CLUSTER
+ELASTIC_PASSWORD=$ELASTIC_PASSWORD
+KIBANA_PASSWORD=$KIBANA_PASSWORD
+ES_HEAP_SIZE=$ES_HEAP_SIZE
+LICENSE=$LICENSE
+MEM_LIMIT=$MEM_LIMIT
+EOF
 
 source ./.env
-
 
 # check system config
 max_map_count=$(cat /proc/sys/vm/max_map_count)
@@ -70,20 +68,6 @@ mkdir -p $ES_FOLDER/$ES_CLUSTER/esagent/data
 mkdir -p $ES_FOLDER/$ES_CLUSTER/config/certs
 check_result
 
-docker compose up -d
-
-echo
-echo ===========================================================
-echo 
-echo Elasticsearch : https://[ELK_CLUSTER_IP]:9200
-echo  elastic/$ELASTIC_PASSWORD
-echo
-echo Kibana : http://[ELK_CLUSTER_IP]:5601
-echo  elastic/$KIBANA_PASSWORD
-echo 
-echo ===========================================================
-
-docker logs -f setup
-
+source ./start.sh
 
 
