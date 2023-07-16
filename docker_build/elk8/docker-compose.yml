@@ -105,7 +105,7 @@ services:
       - xpack.license.self_generated.type=${LICENSE}
       - xpack.monitoring.collection.enabled=true 
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
-    mem_limit: ${MEM_LIMIT}
+    #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
         soft: -1
@@ -152,7 +152,7 @@ services:
       - xpack.license.self_generated.type=${LICENSE}
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
-    mem_limit: ${MEM_LIMIT}
+    #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
         soft: -1
@@ -199,7 +199,7 @@ services:
       - xpack.license.self_generated.type=${LICENSE}
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
-    mem_limit: ${MEM_LIMIT}
+    #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
         soft: -1
@@ -235,7 +235,8 @@ services:
       - ELASTICSEARCH_USERNAME=kibana_system
       - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD}
       - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
-    mem_limit: ${MEM_LIMIT}
+      - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+    #mem_limit: ${MEM_LIMIT}
     healthcheck:
       test:
         [
