@@ -32,6 +32,8 @@ docker volume prune -f
 
 # Generate the .env file
 source ./elk.env
+
+
 cat << EOF > ./.env
 ELK_VERSION=$ELK_VERSION
 ES_FOLDER=$ES_FOLDER
