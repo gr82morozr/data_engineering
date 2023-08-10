@@ -12448,6 +12448,8 @@
   description: >
     kibana Module
   fields:
+    - name: service.node.roles
+      type: keyword
     - name: kibana
       type: group
       description: >

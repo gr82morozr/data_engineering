@@ -1,0 +1,5 @@
+1 - ID fields should be indexed as "keyword" (even the data is integer) for quick term search/filtering.
+    because, by naturem, the usage of ID is different to other integer fields (for example - item count)
+
+
+2 - Date match : now  is never cached.

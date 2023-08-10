@@ -2,6 +2,14 @@
 
 source ./.env
 
+# check system config
+max_map_count=$(cat /proc/sys/vm/max_map_count)
+if [ "$max_map_count" -ne 262144 ]; then
+  sudo sysctl -w vm.max_map_count=262144
+fi
+
+
+
 docker compose up -d
 
 

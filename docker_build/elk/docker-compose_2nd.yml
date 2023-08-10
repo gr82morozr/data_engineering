@@ -1,0 +1,303 @@
+version: "3.8"
+
+services:
+  setup:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
+    container_name: setup 
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+    networks:
+      - cluster_net      
+    user: "0"
+    command: >
+      bash -c '
+        if [ x${ELASTIC_PASSWORD:-password} == x ]; then
+          echo "Set the ELASTIC_PASSWORD environment variable in the .env file";
+          exit 1;
+        elif [ x${KIBANA_PASSWORD:-password} == x ]; then
+          echo "Set the KIBANA_PASSWORD environment variable in the .env file";
+          exit 1;
+        fi;
+        if [ ! -f config/certs/ca.zip ]; then
+          echo "Creating CA";
+          bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
+          unzip config/certs/ca.zip -d config/certs;
+        fi;
+        if [ ! -f config/certs/certs.zip ]; then
+          echo "Creating certs";
+          echo -ne \
+          "instances:\n"\
+          "  - name: es-node-1\n"\
+          "    dns:\n"\
+          "      - es-node-1\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          "  - name: es-node-2\n"\
+          "    dns:\n"\
+          "      - es-node-2\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          "  - name: es-node-3\n"\
+          "    dns:\n"\
+          "      - es-node-3\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          > config/certs/instances.yml;
+          bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
+          unzip config/certs/certs.zip -d config/certs;
+        fi;
+
+        echo "Setting file permissions ...";
+        chown -R root:root config/certs;
+        
+        find . -type d -exec chmod 777 \{\} \;;
+        find . -type f -exec chmod 666 \{\} \;;
+        
+        echo "Waiting for Elasticsearch availability ...";
+        until curl -s --cacert config/certs/ca/ca.crt https://es-node-1:9200 | grep -q "missing authentication credentials"; do sleep 10; done;
+
+        echo "Setting kibana_system password ...";
+        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD:-password}" -H "Content-Type: application/json" https://es-node-1:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD:-password}\"}" | grep -q "^{}"; do sleep 10; done;
+
+        echo "All done!";
+      '
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f config/certs/es-node-1/es-node-1.crt ]"]
+      interval: 1s
+      timeout: 5s
+      retries: 120
+
+  es-node-1:
+    depends_on:
+      - setup
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
+    container_name: es-node-1
+    hostname: es-node-1
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - es_node1_data:/usr/share/elasticsearch/data
+      - es_node1_logs:/usr/share/elasticsearch/logs
+    networks:
+      - cluster_net         
+    ports:
+      - 9200:9200
+    environment:
+      - node.name=es-node-1
+      - cluster.name=${ES_CLUSTER:-elk-cluster}
+      - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
+      - discovery.seed_hosts=es-node-2,es-node-3
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-password}
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es-node-1/es-node-1.key
+      - xpack.security.http.ssl.certificate=certs/es-node-1/es-node-1.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es-node-1/es-node-1.key
+      - xpack.security.transport.ssl.certificate=certs/es-node-1/es-node-1.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE:-basic}
+      - xpack.monitoring.collection.enabled=true 
+      - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+    #mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  es-node-2:
+    depends_on:
+      - es-node-1
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
+    container_name: es-node-2
+    hostname: es-node-2
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - es_node2_data:/usr/share/elasticsearch/data
+      - es_node2_logs:/usr/share/elasticsearch/logs
+    networks:
+      - cluster_net         
+    environment:
+      - node.name=es-node-2
+      - cluster.name=${ES_CLUSTER:-elk-cluster}
+      - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
+      - discovery.seed_hosts=es-node-1,es-node-3
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es-node-2/es-node-2.key
+      - xpack.security.http.ssl.certificate=certs/es-node-2/es-node-2.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es-node-2/es-node-2.key
+      - xpack.security.transport.ssl.certificate=certs/es-node-2/es-node-2.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE:-basic}
+      - xpack.monitoring.collection.enabled=true
+      - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+    #mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  es-node-3:
+    depends_on:
+      - es-node-2
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
+    container_name: es-node-3
+    hostname: es-node-3
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - es_node3_data:/usr/share/elasticsearch/data
+      - es_node3_logs:/usr/share/elasticsearch/logs
+    networks:
+      - cluster_net         
+    environment:
+      - node.name=es-node-3
+      - cluster.name=${ES_CLUSTER:-elk-cluster}
+      - cluster.initial_master_nodes=es-node-1,es-node-2,es-node-3
+      - discovery.seed_hosts=es-node-1,es-node-2
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es-node-3/es-node-3.key
+      - xpack.security.http.ssl.certificate=certs/es-node-3/es-node-3.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es-node-3/es-node-3.key
+      - xpack.security.transport.ssl.certificate=certs/es-node-3/es-node-3.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE:-basic}
+      - xpack.monitoring.collection.enabled=true
+      - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+    #mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  kibana:
+    depends_on:
+      - es-node-1
+      - es-node-2
+      - es-node-3
+    image: docker.elastic.co/kibana/kibana:${ELK_VERSION:-8.8.2}
+    container_name: kibana
+    hostname: kibana
+    volumes:
+      - certs:/usr/share/kibana/config/certs
+      - kibanadata:/usr/share/kibana/data
+    networks:
+      - cluster_net         
+    ports:
+      - 5601:5601
+    environment:
+      - SERVERNAME=kibana
+      - ELASTICSEARCH_HOSTS=https://es-node-1:9200
+      - ELASTICSEARCH_USERNAME=${KIBANA_USERNAME:-kibana_system}
+      #- ELASTICSEARCH_USERNAME=elastic # for older version of ELK
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-password}
+      - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
+      - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+    #mem_limit: ${MEM_LIMIT}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+volumes:
+  certs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/config/certs
+  es_node1_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-node-1/data
+  es_node1_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-node-1/logs
+  es_node2_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-node-2/data
+  es_node2_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-node-2/logs
+  es_node3_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-node-3/data
+  es_node3_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-node-3/logs
+  kibanadata:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/kibana/data
+
+networks:
+  cluster_net:
+    driver: bridge

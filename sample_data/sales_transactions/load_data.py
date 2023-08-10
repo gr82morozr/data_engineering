@@ -4,7 +4,7 @@ import re
 import json
 import requests
 import urllib3
-import pandas
+import pandas as pd
 from zipfile import ZipFile
 
 
@@ -16,7 +16,7 @@ HEADERS = { 'Content-Type': 'application/json'  }
 
 def get_config() :
   config = {
-    "DATA_FILE"   : "./sales_transaction.zip", 
+    "DATA_FILE"   : "./sales_transactions.zip", 
     "ES_HOST"     : "https://localhost:9200",
     "ES_USERNAME" : "elastic",
     "ES_PASSWORD" : "password",
@@ -26,22 +26,11 @@ def get_config() :
 
 
 def extract_zip(input_zip):
+  print (input_zip)
   input_zip=ZipFile(input_zip)
-  data = {name: input_zip.read(name).decode("utf-8").replace('\n', ' ').replace("\"", "'") for name in input_zip.namelist()}
-  return data
-
-def parse_data(data):
-  pattern = r"/([^/]+)/"
-  es_data = []
-  # Extract the middle part from the match
-  for k in data.keys():
-    # Apply the regex pattern to the string
-    match = re.search(pattern, k)
-    if match is None : continue
-    key = match.group(1)
-    es_data.append({"category": key, "news" : data[k] })
-  
-  return es_data
+  with input_zip.ZipFile(input_zip, 'r') as zip_ref:
+      zip_ref.extractall("./")
+  return 
 
 def delete_es_index(index_name, es_url, es_username, es_password):
     # Make the HTTP DELETE request to Elasticsearch
@@ -69,7 +58,7 @@ def create_es_index(index_name, es_url, es_username, es_password):
         },
         "mappings": {
           "properties": {
-            "category": {
+            "Country": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -78,7 +67,44 @@ def create_es_index(index_name, es_url, es_username, es_password):
                 }
               }
             },
-            "news": {
+            "CustomerNo": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "Date": {
+              "type": "date",
+              "format": "MM/d/yyyy||MM/dd/yyyy||M/dd/yyyy||M/d/yyyy"
+            },
+            "Price": {
+              "type": "float"
+            },
+            "ProductName": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "ProductNo": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword",
+                  "ignore_above": 256
+                }
+              }
+            },
+            "Quantity": {
+              "type": "long"
+            },
+            "TransactionNo": {
               "type": "text",
               "fields": {
                 "keyword": {
@@ -89,7 +115,8 @@ def create_es_index(index_name, es_url, es_username, es_password):
             }
           }
         }
-    }
+      }
+    
 
     # Create the index with settings and mappings
     response = requests.put(
@@ -112,31 +139,92 @@ def load_es(es_data):
   delete_es_index( config['ES_INDEX'], config['ES_HOST'], config['ES_USERNAME'], config['ES_PASSWORD'] )
   create_es_index( config['ES_INDEX'], config['ES_HOST'], config['ES_USERNAME'], config['ES_PASSWORD'] )
 
+  
+  payload = ''
+  bulk_count = 0
   for doc in es_data:
-    print (doc["category"])
     # Make the HTTP POST request to Elasticsearch
-    response = requests.post(
-      config['ES_HOST'] + '/' + config['ES_INDEX'] + '/_doc',
-      headers=HEADERS,
-      auth=(config['ES_USERNAME'], config['ES_PASSWORD']),
-      data=json.dumps(doc),
-      verify=False
-    )
+    bulk_count +=1
+    payload += '{ "index": { "_index": "' + config['ES_INDEX'] + '" , "_id" : "' +  str(bulk_count) + '"} }' + "\n"
+    payload += json.dumps(doc) + "\n"
 
-    # Check the response status
-    if response.status_code == 201:
-      #print('Data pushed to Elasticsearch successfully.')
-      pass
-    else:
-      print(f'Failed to push data to Elasticsearch. Status code: {response.status_code}')
+    if bulk_count % 4000 ==0 : 
+      response = requests.post(
+        config['ES_HOST'] + '/_bulk',
+        headers=HEADERS,
+        auth=(config['ES_USERNAME'], config['ES_PASSWORD']),
+        data=payload,
+        verify=False
+      )
+      print (str(bulk_count) + " => " + str(response.status_code))
+      payload = ''
+      
+  
+  response = requests.post(
+    config['ES_HOST'] + '/_bulk',
+    headers=HEADERS,
+    auth=(config['ES_USERNAME'], config['ES_PASSWORD']),
+    data=payload,
+    verify=False
+  )
+  print (str(bulk_count) + " => " + str(response.status_code))
+
+
+
+  response = requests.post( 
+    config['ES_HOST'] + '/' + config['ES_INDEX'] + '/_refresh',
+    headers=HEADERS,
+    auth=(config['ES_USERNAME'], config['ES_PASSWORD']),
+    verify=False)
+  
+
   print ("all done.")
+
+def verify_es(es_data) :
+
+  config = get_config()
+  missing_count =0
+
+  pay_load = {
+     "docs" : [
+        
+     ]
+  }
+
+  for i in range(1,len(es_data)+1):
+    data = {  "_id": str(i) }
+    pay_load["docs"].append ( data)
+
+    if i % 1000 ==0 : 
+      response = requests.get( 
+        config['ES_HOST'] + '/' + config['ES_INDEX'] + '/_mget/' ,
+        headers=HEADERS,
+        auth=(config['ES_USERNAME'], config['ES_PASSWORD']),
+        data= json.dumps(pay_load),
+        verify=False)
+      
+      response_dic = json.loads(response.text)
+      missing_ids = [ doc["_id"] for doc in response_dic["docs"] if not doc["found"] ]
+      print (str(i) + ":" + str(len(missing_ids)));
 
 
 def main() : 
   config = get_config()
-  data = extract_zip(config["DATA_FILE"])
-  data = parse_data(data)
-  load_es(data)
+  data_types = {
+    'TransactionNo': str,
+    'Date': str,
+    'ProductNo': str,
+    'ProductName': str,
+    'Price': float,
+    'Quantity': int,
+    'CustomerNo': str,
+    'Country': str
+  }
+  df = pd.read_csv('./SalesTransaction.csv', dtype=data_types)  
+  
+  data_dict = df.to_dict(orient='records')
+  load_es(data_dict)
+  #verify_es(data_dict)
   pass
 
 
