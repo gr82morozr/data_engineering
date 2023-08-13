@@ -1,5 +1,5 @@
 .env
 *.bak
 
-elk-cluster/
+elk-cluster*/
 
