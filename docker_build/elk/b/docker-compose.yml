@@ -7,7 +7,7 @@ services:
     volumes:
       - certs_b:/usr/share/elasticsearch/config/certs
     networks:
-      - cluster_net      
+      - elastic_net      
     user: "0"
     command: >
       bash -c '
@@ -48,7 +48,10 @@ services:
         until curl -s --cacert config/certs/ca/ca.crt https://es-b1:8200 | grep -q "missing authentication credentials"; do sleep 10; done;
 
         echo "Setting kibana_system password ...";
-        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD:-password}" -H "Content-Type: application/json" https://es-b1:8200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD:-password}\"}" | grep -q "^{}"; do sleep 10; done;
+        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD:-password}" -H "Content-Type: application/json" https://es-b1:8200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD:-password}\"}" | grep -q "^{}"; do sleep 5; done;
+
+        echo "Setting Kibana dark mode...";
+        until curl -s -X PUT  -u "elastic:${KIBANA_PASSWORD:-password}" -H "kbn-xsrf: true" -H "Content-Type: application/json" http://kibana-b:5602/api/saved_objects/config/"${ELK_VERSION:-8.8.2}"   -d "{\"attributes\":  { \"theme:darkMode\" : true} }" | grep -q "updated_at"; do sleep 5; done;
 
         echo "All done!";
       '
@@ -70,7 +73,7 @@ services:
       - es_b1_logs:/usr/share/elasticsearch/logs
       - snapshots_b:/usr/share/elasticsearch/snapshots
     networks:
-      - cluster_net         
+      - elastic_net         
     ports:
       - 8200:8200
     environment:
@@ -123,12 +126,12 @@ services:
       - certs_b:/usr/share/kibana/config/certs
       - kibanab_data:/usr/share/kibana/data
     networks:
-      - cluster_net         
+      - elastic_net         
     ports:
-      - 8601:8601
+      - 5602:5602
     environment:
       - SERVERNAME=kibana-b
-      - SERVER_PORT=8601
+      - SERVER_PORT=5602
       - ELASTICSEARCH_HOSTS=https://es-b1:8200
       - ELASTICSEARCH_USERNAME=${KIBANA_USERNAME:-kibana_system}
       #- ELASTICSEARCH_USERNAME=elastic # for older version of ELK
@@ -140,7 +143,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "curl -s -I http://localhost:8601 | grep -q 'HTTP/1.1 302 Found'",
+          "curl -s -I http://localhost:5602 | grep -q 'HTTP/1.1 302 Found'",
         ]
       interval: 10s
       timeout: 10s
@@ -177,7 +180,8 @@ volumes:
       type: none
       o: bind
       device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/snapshots
-
+      
 networks:
-  cluster_net:
-    driver: bridge
+  elastic_net:
+    external: true
+

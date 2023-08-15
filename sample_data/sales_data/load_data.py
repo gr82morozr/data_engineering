@@ -20,7 +20,7 @@ def get_config() :
     "ES_HOST"     : "https://localhost:9200",
     "ES_USERNAME" : "elastic",
     "ES_PASSWORD" : "password",
-    "ES_INDEX"    : "sales_transaction"
+    "ES_INDEX"    : "sales_data"
   }
   return config
 

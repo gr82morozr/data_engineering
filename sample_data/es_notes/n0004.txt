@@ -1,0 +1,48 @@
+doc_values
+will be stored in "a column-oriented fashion" (--- like data warehouse. )
+
+
+PUT my-index-000001
+{
+  "mappings": {
+    "properties": {
+      "status_code": { 
+        "type":  "long"
+      },
+      "session_id": { 
+        "type":  "long",
+        "index": false
+      }
+    }
+  }
+}
+
+[status_code] is regular field,which is indexed.
+[session_id] is NOT indexed, it "doc-value-ONLY" 
+
+it would be usefully for data aggregation, sorting.
+
+
+text fields do not have doc_values available by default
+
+
+---- Disable doc_values -----
+
+All fields which support doc values have them enabled by default. 
+If you are sure that you don’t need to sort or aggregate on a field, or access the field value from a script,
+you can disable doc values in order to save disk space
+
+PUT my-index-000001
+{
+  "mappings": {
+    "properties": {
+      "status_code": { 
+        "type":       "keyword"
+      },
+      "session_id": { 
+        "type":       "keyword",
+        "doc_values": false
+      }
+    }
+  }
+}

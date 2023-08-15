@@ -26,12 +26,24 @@ source ./.env
 check_and_stop_container filebeat
 check_and_stop_container fleet
 docker compose down --volumes --remove-orphans
-#docker network prune -f
-#docker volume prune 
+
+# remove unused resources
+docker image prune -f
+docker network prune -f
+docker volume prune -f
 
 
 # Generate the .env file
 source ../elk.env
+
+# created shared networks
+if [ "$(docker network ls | grep $NETWORK_NAME)" ]; then
+  echo "The network $NETWORK_NAME already exists."
+else
+  docker network create --driver bridge $NETWORK_NAME
+  echo "The network $NETWORK_NAME created."
+fi
+
 
 
 cat << EOF > ./.env
@@ -56,6 +68,7 @@ fi
 
 # cleanup local folders
 rm -fr $ES_FOLDER/$ES_CLUSTER
+
 check_result
 
 # create local folders

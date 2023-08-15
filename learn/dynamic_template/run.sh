@@ -1,28 +1,47 @@
-#curl elastic:password -X GET http://localhost:9200/_index_template
-
-$ES_HOST="https://localhost:9200"
-$AUTH=" elastic:password "
-
-#curl -u elastic:password -X GET https://localhost:9200/_index_template -k   | jq .  
+ES_HOST="https://localhost:9200"
+AUTH=" elastic:password "
+HEADER="Content-Type: application/json"
 
 
-curl -k -u elastic:password -X PUT "https://localhost:9200/mydata/_doc/1?pretty" -H 'Content-Type: application/json' -d'
+curl -k -u $AUTH -X PUT "${ES_HOST}/_index_template/mylog_template" -H "${HEADER}" -d'
 {
-  "username": "marywhite",
-  "email": "mary@white.com",
-  "name": {
-    "first": "Mary",
-    "middle": "Alice",
-    "last": "White"
+  "index_patterns": ["mylog-*"],  // Apply this template to any index named like log-*
+  "template": {
+    "settings": {
+      "number_of_shards": 2,
+      "number_of_replicas": 1
+    },
+    "mappings": {
+      "properties": {
+        "timestamp": {
+          "type": "date"
+        },
+        "message": {
+          "type": "text"
+        },
+        "level": {
+          "type": "keyword"
+        }
+      }
+    },
+    "aliases": {
+      "all_logs": {}
+    }
+  },
+  "priority": 1
+}
+' | jq .
+
+
+PUT _component_template/component_template1
+{
+  "template": {
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        }
+      }
+    }
   }
 }
-'
-
-curl -k -u elastic:password -X GET "https://localhost:9200/mydata/_settings" | jq .
-
-curl -k -u elastic:password -X GET "https://localhost:9200/mydata/_mappings" | jq .
-
-
-curl -k -u elastic:password -X PUT "https://localhost:9200/mydata/_doc/1?pretty" -H 'Content-Type: application/json' -d'
-{ "count": "aaa"}
-'
