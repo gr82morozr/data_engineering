@@ -1,0 +1,46 @@
+Alias
+
+
+
+
+=====================================================
+POST _aliases
+{
+  "actions": [
+    {
+      "add": {
+        "index": "my-index-1",
+         "alias": "my-index",
+         "is_write_index": true
+      }
+    },
+    {
+      "add": {
+        "index": "my-index-2",
+         "alias": "my-index",
+         "is_write_index": true
+      }
+    }
+  ]
+}
+
+=====================================================
+
+
+{
+  "error" : {
+    "root_cause" : [
+      {
+        "type" : "illegal_state_exception",
+        "reason" : "alias [my-index] has more than one write index [my-index-2,my-index-1]"
+      }
+    ],
+    "type" : "illegal_state_exception",
+    "reason" : "alias [my-index] has more than one write index [my-index-2,my-index-1]"
+  },
+  "status" : 500
+}
+
+
+
+alias can only have ONE write index

@@ -45,6 +45,24 @@ services:
           "      - localhost\n"\
           "    ip:\n"\
           "      - 127.0.0.1\n"\
+          "  - name: es-a4\n"\
+          "    dns:\n"\
+          "      - es-a4\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          "  - name: es-a5\n"\
+          "    dns:\n"\
+          "      - es-a5\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          "  - name: es-a6\n"\
+          "    dns:\n"\
+          "      - es-a6\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\                              
           > config/certs/instances.yml;
           bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
           unzip config/certs/certs.zip -d config/certs;
@@ -60,7 +78,13 @@ services:
         until curl -s --cacert config/certs/ca/ca.crt https://es-a1:9200 | grep -q "missing authentication credentials"; do sleep 10; done;
 
         echo "Setting kibana_system password ...";
-        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD:-password}" -H "Content-Type: application/json" https://es-a1:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD:-password}\"}" | grep -q "^{}"; do sleep 10; done;
+        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD:-password}" -H "Content-Type: application/json" https://es-a1:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD:-password}\"}" | grep -q "^{}"; do sleep 5; done;
+
+        echo "Setting Trial licence...";
+        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD:-password}" -H "Content-Type: application/json" https://es-a1:9200/_license/start_trial?acknowledge=true  | grep -q "trial_was_started"; do sleep 5; done;
+
+        echo "Setting Kibana dark mode...";
+        until curl -s -X PUT  -u "elastic:${KIBANA_PASSWORD:-password}" -H "kbn-xsrf: true" -H "Content-Type: application/json" http://kibana:5601/api/saved_objects/config/"${ELK_VERSION:-8.8.2}"   -d "{\"attributes\":  { \"theme:darkMode\" : true} }" | grep -q "updated_at"; do sleep 5; done;
 
         echo "All done!";
       '
@@ -89,7 +113,7 @@ services:
       - node.name=es-a1
       - cluster.name=${ES_CLUSTER:-elk-cluster}
       - cluster.initial_master_nodes=es-a1,es-a2,es-a3
-      - discovery.seed_hosts=es-a2,es-a3
+      - discovery.seed_hosts=es-a2,es-a3,es-a4,es-a5,es-a6
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-password}
       - bootstrap.memory_lock=true
       - xpack.security.enabled=true
@@ -220,11 +244,161 @@ services:
       timeout: 10s
       retries: 120
 
+  es-a4:
+    depends_on:
+      - es-a3
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
+    container_name: es-a4
+    hostname: es-a4
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - es_a4_data:/usr/share/elasticsearch/data
+      - es_a4_logs:/usr/share/elasticsearch/logs
+      - snapshots:/usr/share/elasticsearch/snapshots      
+    networks:
+      - elastic_net         
+    environment:
+      - node.name=es-a4
+      - cluster.name=${ES_CLUSTER:-elk-cluster}
+      - cluster.initial_master_nodes=es-a1,es-a2,es-a3
+      - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a4,es-a5,es-a6
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es-a4/es-a4.key
+      - xpack.security.http.ssl.certificate=certs/es-a4/es-a4.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es-a4/es-a4.key
+      - xpack.security.transport.ssl.certificate=certs/es-a4/es-a4.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE:-basic}
+      - xpack.monitoring.collection.enabled=true
+      - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+      - path.repo=/usr/share/elasticsearch/snapshots      
+    #mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  es-a5:
+    depends_on:
+      - es-a4
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
+    container_name: es-a5
+    hostname: es-a5
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - es_a5_data:/usr/share/elasticsearch/data
+      - es_a5_logs:/usr/share/elasticsearch/logs
+      - snapshots:/usr/share/elasticsearch/snapshots      
+    networks:
+      - elastic_net         
+    environment:
+      - node.name=es-a5
+      - cluster.name=${ES_CLUSTER:-elk-cluster}
+      - cluster.initial_master_nodes=es-a1,es-a2,es-a3
+      - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a4,es-a5,es-a6
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es-a5/es-a5.key
+      - xpack.security.http.ssl.certificate=certs/es-a5/es-a5.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es-a5/es-a5.key
+      - xpack.security.transport.ssl.certificate=certs/es-a5/es-a5.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE:-basic}
+      - xpack.monitoring.collection.enabled=true
+      - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+      - path.repo=/usr/share/elasticsearch/snapshots      
+    #mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  es-a6:
+    depends_on:
+      - es-a5
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
+    container_name: es-a6
+    hostname: es-a6
+    volumes:
+      - certs:/usr/share/elasticsearch/config/certs
+      - es_a6_data:/usr/share/elasticsearch/data
+      - es_a6_logs:/usr/share/elasticsearch/logs
+      - snapshots:/usr/share/elasticsearch/snapshots      
+    networks:
+      - elastic_net         
+    environment:
+      - node.name=es-a6
+      - cluster.name=${ES_CLUSTER:-elk-cluster}
+      - cluster.initial_master_nodes=es-a1,es-a2,es-a3
+      - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a4,es-a5,es-a6
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=true
+      - xpack.security.authc.api_key.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/es-a6/es-a6.key
+      - xpack.security.http.ssl.certificate=certs/es-a6/es-a6.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/es-a6/es-a6.key
+      - xpack.security.transport.ssl.certificate=certs/es-a6/es-a6.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=${LICENSE:-basic}
+      - xpack.monitoring.collection.enabled=true
+      - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+      - path.repo=/usr/share/elasticsearch/snapshots      
+    #mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
   kibana:
     depends_on:
       - es-a1
       - es-a2
       - es-a3
+      - es-a4
+      - es-a5
+      - es-a6
     image: docker.elastic.co/kibana/kibana:${ELK_VERSION:-8.8.2}
     container_name: kibana
     hostname: kibana
@@ -239,6 +413,7 @@ services:
       - SERVERNAME=kibana
       - ELASTICSEARCH_HOSTS=https://es-a1:9200
       - ELASTICSEARCH_USERNAME=${KIBANA_USERNAME:-kibana_system}
+      - xpack.security.cookieName=${ES_CLUSTER:-elk-cluster}_5601
       #- ELASTICSEARCH_USERNAME=elastic # for older version of ELK
       - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-password}
       - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
@@ -297,6 +472,46 @@ volumes:
       type: none
       o: bind
       device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a3/logs
+
+  es_a4_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a4/data
+  es_a4_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a4/logs
+
+  es_a5_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a5/data
+  es_a5_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a5/logs
+
+  es_a6_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a6/data
+  es_a6_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a6/logs      
+
   kibanadata:
     driver: local
     driver_opts:

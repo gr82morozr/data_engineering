@@ -49,7 +49,7 @@ fi
 cat << EOF > ./.env
 ELK_VERSION=$ELK_VERSION
 ES_FOLDER=$ES_FOLDER
-ES_CLUSTER=${ES_CLUSTER}_a
+ES_CLUSTER=${ES_CLUSTER}_l
 ELASTIC_PASSWORD=$ELASTIC_PASSWORD
 KIBANA_PASSWORD=$KIBANA_PASSWORD
 ES_HEAP_SIZE=$ES_HEAP_SIZE
@@ -77,6 +77,12 @@ mkdir -p $ES_FOLDER/$ES_CLUSTER/es-a2/data
 mkdir -p $ES_FOLDER/$ES_CLUSTER/es-a2/logs
 mkdir -p $ES_FOLDER/$ES_CLUSTER/es-a3/data
 mkdir -p $ES_FOLDER/$ES_CLUSTER/es-a3/logs
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-a4/data
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-a4/logs
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-a5/data
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-a5/logs
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-a6/data
+mkdir -p $ES_FOLDER/$ES_CLUSTER/es-a6/logs
 mkdir -p $ES_FOLDER/$ES_CLUSTER/kibana/data
 mkdir -p $ES_FOLDER/$ES_CLUSTER/esagent/data
 mkdir -p $ES_FOLDER/$ES_CLUSTER/config/certs

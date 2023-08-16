@@ -1,0 +1,12 @@
+basic, replace document
+
+!!! "replace" is difference from "update" !!!
+
+PUT /my-index/_doc/new_id-3
+{
+    "name" : "replaced by new doc"
+}
+
+
+
+

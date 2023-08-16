@@ -1,0 +1,110 @@
+basic, update field, add field
+
+
+
+POST /my-index/_doc
+{
+  "name" : "Toyata",
+  "price" : 1199888,
+  "quantity" : 22
+}
+
+
+GET my-index/_search
+
+# update field
+POST /my-index/_update/1Mel94kB82tcl9-0aQql
+{
+  "doc" : {
+    "quantity" : 220
+  }
+}
+
+# add new field
+POST /my-index/_update/1Mel94kB82tcl9-0aQql
+{
+  "doc" : {
+    "location" : "Sydney"
+  }
+}
+
+# this shows the version number (my-index/_search doesn't)
+GET my-index/_doc/1Mel94kB82tcl9-0aQql
+
+
+#script update
+POST /my-index/_update/1Mel94kB82tcl9-0aQql
+{
+  "script": {
+    "source": "ctx._source.price--"
+  }
+}
+
+# script set value
+POST /my-index/_update/1Mel94kB82tcl9-0aQql
+{
+  "script": {
+    "source": "ctx._source.price=250"
+  }
+}
+
+# script with passing parameter
+POST /my-index/_update/1Mel94kB82tcl9-0aQql
+{
+  "script" : {
+    "source": "ctx._source.price = ctx._source.price * params.discount",
+    "params": {
+      "discount" : 0.95
+    }
+  }
+}
+
+
+# more ccomplicated free text script
+POST /my-index/_update/1Mel94kB82tcl9-0aQql
+{
+  "script": {
+    "source": """
+      if (ctx._source.quantity > 210) {
+        ctx._source.quantity -=20
+      }
+    """
+  }
+}
+
+
+# upsert 1
+POST /my-index/_update/new_id-2
+{
+  "script": {
+    "source": "ctx._source.quantity--"
+  },
+  "upsert": {
+    "name" : "Toyata",
+    "price" : 2622.5,
+    "quantity" : 200,
+    "location" : "Sydney"
+  }
+}
+* if "new_id-2" not exists, then create new doc as "upsert" section
+* if "new_id-2" exists, ONLY run the "script" part to update document
+
+POST /my-index/_update/new_id-3
+{
+  "doc": {
+    "price" : 2222
+  },
+  "upsert": {
+    "name" : "Toyata",
+    "price" : 2622.5,
+    "quantity" : 200,
+    "location" : "Sydney"
+  }
+}
+* if "new_id-3" not exists, then create new doc as "upsert" section
+* if "new_id-3" exists, ONLY run the "doc" part to update document
+
+
+
+
+

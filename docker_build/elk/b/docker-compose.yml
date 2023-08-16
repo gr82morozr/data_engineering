@@ -50,8 +50,12 @@ services:
         echo "Setting kibana_system password ...";
         until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD:-password}" -H "Content-Type: application/json" https://es-b1:8200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD:-password}\"}" | grep -q "^{}"; do sleep 5; done;
 
-        echo "Setting Kibana dark mode...";
-        until curl -s -X PUT  -u "elastic:${KIBANA_PASSWORD:-password}" -H "kbn-xsrf: true" -H "Content-Type: application/json" http://kibana-b:5602/api/saved_objects/config/"${ELK_VERSION:-8.8.2}"   -d "{\"attributes\":  { \"theme:darkMode\" : true} }" | grep -q "updated_at"; do sleep 5; done;
+        echo "Setting Trial licence...";
+        until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD:-password}" -H "Content-Type: application/json" https://es-b1:8200/_license/start_trial?acknowledge=true  | grep -q "trial_was_started"; do sleep 5; done;
+    
+
+        #echo "Setting Kibana dark mode...";
+        #until curl -s -X PUT  -u "elastic:${KIBANA_PASSWORD:-password}" -H "kbn-xsrf: true" -H "Content-Type: application/json" http://kibana-b:5602/api/saved_objects/config/"${ELK_VERSION:-8.8.2}"   -d "{\"attributes\":  { \"theme:darkMode\" : true} }" | grep -q "updated_at"; do sleep 5; done;
 
         echo "All done!";
       '
@@ -134,6 +138,7 @@ services:
       - SERVER_PORT=5602
       - ELASTICSEARCH_HOSTS=https://es-b1:8200
       - ELASTICSEARCH_USERNAME=${KIBANA_USERNAME:-kibana_system}
+      - xpack.security.cookieName=${ES_CLUSTER:-elk-cluster}_5602
       #- ELASTICSEARCH_USERNAME=elastic # for older version of ELK
       - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-password}
       - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
