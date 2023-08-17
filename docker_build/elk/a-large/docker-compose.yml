@@ -18,11 +18,13 @@ services:
           echo "Set the KIBANA_PASSWORD environment variable in the .env file";
           exit 1;
         fi;
+        
         if [ ! -f config/certs/ca.zip ]; then
           echo "Creating CA";
           bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
-          unzip config/certs/ca.zip -d config/certs;
         fi;
+        unzip config/certs/ca.zip -d config/certs;
+
         if [ ! -f config/certs/certs.zip ]; then
           echo "Creating certs";
           echo -ne \
@@ -62,11 +64,12 @@ services:
           "      - es-a6\n"\
           "      - localhost\n"\
           "    ip:\n"\
-          "      - 127.0.0.1\n"\                              
+          "      - 127.0.0.1\n"\
           > config/certs/instances.yml;
           bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
           unzip config/certs/certs.zip -d config/certs;
         fi;
+
 
         echo "Setting file permissions ...";
         chown -R root:root config/certs;
@@ -163,7 +166,7 @@ services:
       - node.name=es-a2
       - cluster.name=${ES_CLUSTER:-elk-cluster}
       - cluster.initial_master_nodes=es-a1,es-a2,es-a3
-      - discovery.seed_hosts=es-a1,es-a3
+      - discovery.seed_hosts=es-a1,es-a3,es-a4,es-a5,es-a6
       - bootstrap.memory_lock=true
       - xpack.security.enabled=true
       - xpack.security.authc.api_key.enabled=true
@@ -212,7 +215,7 @@ services:
       - node.name=es-a3
       - cluster.name=${ES_CLUSTER:-elk-cluster}
       - cluster.initial_master_nodes=es-a1,es-a2,es-a3
-      - discovery.seed_hosts=es-a1,es-a2
+      - discovery.seed_hosts=es-a1,es-a2,es-a4,es-a5,es-a6
       - bootstrap.memory_lock=true
       - xpack.security.enabled=true
       - xpack.security.authc.api_key.enabled=true
@@ -261,7 +264,7 @@ services:
       - node.name=es-a4
       - cluster.name=${ES_CLUSTER:-elk-cluster}
       - cluster.initial_master_nodes=es-a1,es-a2,es-a3
-      - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a4,es-a5,es-a6
+      - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a5,es-a6
       - bootstrap.memory_lock=true
       - xpack.security.enabled=true
       - xpack.security.authc.api_key.enabled=true
@@ -310,7 +313,7 @@ services:
       - node.name=es-a5
       - cluster.name=${ES_CLUSTER:-elk-cluster}
       - cluster.initial_master_nodes=es-a1,es-a2,es-a3
-      - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a4,es-a5,es-a6
+      - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a4,es-a6
       - bootstrap.memory_lock=true
       - xpack.security.enabled=true
       - xpack.security.authc.api_key.enabled=true
@@ -359,7 +362,7 @@ services:
       - node.name=es-a6
       - cluster.name=${ES_CLUSTER:-elk-cluster}
       - cluster.initial_master_nodes=es-a1,es-a2,es-a3
-      - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a4,es-a5,es-a6
+      - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a4,es-a6
       - bootstrap.memory_lock=true
       - xpack.security.enabled=true
       - xpack.security.authc.api_key.enabled=true
@@ -472,7 +475,6 @@ volumes:
       type: none
       o: bind
       device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a3/logs
-
   es_a4_data:
     driver: local
     driver_opts:
@@ -485,7 +487,6 @@ volumes:
       type: none
       o: bind
       device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a4/logs
-
   es_a5_data:
     driver: local
     driver_opts:
@@ -498,7 +499,6 @@ volumes:
       type: none
       o: bind
       device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a5/logs
-
   es_a6_data:
     driver: local
     driver_opts:
@@ -510,8 +510,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a6/logs      
-
+      device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a6/logs
   kibanadata:
     driver: local
     driver_opts:

@@ -18,11 +18,14 @@ services:
           echo "Set the KIBANA_PASSWORD environment variable in the .env file";
           exit 1;
         fi;
+        
         if [ ! -f config/certs/ca.zip ]; then
           echo "Creating CA";
           bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
-          unzip config/certs/ca.zip -d config/certs;
         fi;
+        unzip config/certs/ca.zip -d config/certs;
+
+
         if [ ! -f config/certs/certs.zip ]; then
           echo "Creating certs";
           echo -ne \
@@ -38,6 +41,7 @@ services:
           unzip config/certs/certs.zip -d config/certs;
         fi;
 
+       
         echo "Setting file permissions ...";
         chown -R root:root config/certs;
         
@@ -80,6 +84,7 @@ services:
       - elastic_net         
     ports:
       - 8200:8200
+      - 8300:8300
     environment:
       - node.name=es-b1
       - discovery.type=single-node

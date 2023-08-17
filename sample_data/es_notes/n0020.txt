@@ -1,0 +1,60 @@
+Component Template, Index Template
+
+
+
+# When there is conflicts between component templates and index template, the index template overrides.
+
+
+PUT _component_template/mysettings
+{
+  "template": {
+    "settings": {
+      "number_of_shards": 10
+    }
+  }
+}
+
+
+PUT _index_template/my_index_template
+{
+  "index_patterns" : ["log-event-*"],
+  "composed_of" : ["mysettings"],
+  "template": {
+    "settings" : {
+      "number_of_shards" : 20
+    }
+  }
+}
+  
+
+
+PUT log-event-2023
+GET  log-event-2023
+
+
+>>> result 
+{
+  "log-event-2023" : {
+    "aliases" : { },
+    "mappings" : { },
+    "settings" : {
+      "index" : {
+        "routing" : {
+          "allocation" : {
+            "include" : {
+              "_tier_preference" : "data_content"
+            }
+          }
+        },
+        "number_of_shards" : "20",   // ==========> from index template
+        "provided_name" : "log-event-2023",
+        "creation_date" : "1692238667478",
+        "number_of_replicas" : "1",
+        "uuid" : "qcl-Vx-0Rnyvg2ik29Qnuw",
+        "version" : {
+          "created" : "8010099"
+        }
+      }
+    }
+  }
+}

@@ -80,6 +80,18 @@ mkdir -p $ES_FOLDER/$ES_CLUSTER/config/certs
 mkdir -p $ES_FOLDER/$ES_CLUSTER/snapshots
 check_result
 
-source ./start.sh
+# Optional
+# Look for pther remote cluster to download CA
+# make sure using same CA for remote cluster test
+
+if [ ! -f ../shared/ca.zip ]; then
+  source ./start.sh
+  cp $ES_FOLDER/$ES_CLUSTER/config/certs/ca.zip ../shared/ca.zip
+else
+  mkdir -p $ES_FOLDER/$ES_CLUSTER/config/certs/ca
+  cp ../shared/ca.zip $ES_FOLDER/$ES_CLUSTER/config/certs/ca.zip 
+  source ./start.sh
+fi  
+
 
 
