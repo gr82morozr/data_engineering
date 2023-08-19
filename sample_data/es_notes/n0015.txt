@@ -63,7 +63,7 @@ PUT my-dynamic-template-demo-index
 dynamic template
 
 * c for creating mapping of field based on given pattern of the field name 
-for example sting to IP
+for example string to IP
 
 
 

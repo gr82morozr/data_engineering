@@ -1,5 +1,11 @@
 version: "3.8"
-
+# ===========================================================
+#  Built 6 nodes Elasticsearch clusters.
+#  node a1~a3 
+#  node a4 : hot
+#  node a5 : warm
+#  node a6 : cold
+# ===========================================================
 services:
   setup:
     image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
@@ -280,7 +286,9 @@ services:
       - xpack.license.self_generated.type=${LICENSE:-basic}
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
-      - path.repo=/usr/share/elasticsearch/snapshots      
+      - path.repo=/usr/share/elasticsearch/snapshots
+      - node.attr.box_type=hot
+      - node.attr.rack=rack1
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -330,6 +338,8 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots      
+      - node.attr.box_type=warm
+      - node.attr.rack=rack1
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -378,7 +388,9 @@ services:
       - xpack.license.self_generated.type=${LICENSE:-basic}
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
-      - path.repo=/usr/share/elasticsearch/snapshots      
+      - path.repo=/usr/share/elasticsearch/snapshots
+      - node.attr.box_type=code
+      - node.attr.rack=rack1
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:

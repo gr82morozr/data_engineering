@@ -1,0 +1,5 @@
+reindex
+
+
+Note 
+1 - reindex does NOT copy the mapping, mapping should be copied manually.

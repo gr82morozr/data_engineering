@@ -1,0 +1,37 @@
+runtime field
+
+=============================================================
+
+for search request
+
+
+GET movie_data/_search
+{
+  "_source": false, 
+  "runtime_mappings": {
+    "profit_timtime": {
+      "type": "long",
+      "script": {
+        "source": "emit(doc['revenue'].value - doc['budget'].value)"
+      }
+    }
+  },
+  "fields": [
+    "original_title", "popularity", "profit_timtime", "genres.text", "non-exist"
+  ]
+}
+=============================================================
+
+
+
+for aggregations
+
+for filtering
+
+for sorting
+
+
+
+
+
+

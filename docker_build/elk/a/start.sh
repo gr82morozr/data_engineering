@@ -1,5 +1,19 @@
 #!/bin/bash
 
+
+
+# Generate the .env file
+source ../elk.env
+
+# created shared networks
+if [ "$(docker network ls | grep $NETWORK_NAME)" ]; then
+  echo "The network $NETWORK_NAME already exists."
+else
+  docker network create --driver bridge $NETWORK_NAME
+  echo "The network $NETWORK_NAME created."
+fi
+
+
 source ./.env
 
 # check system config
