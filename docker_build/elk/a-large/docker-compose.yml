@@ -140,6 +140,7 @@ services:
       - xpack.monitoring.collection.enabled=true 
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
+      - node.attr.ilm_type=hot
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -189,6 +190,7 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
+      - node.attr.ilm_type=hot
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -237,7 +239,8 @@ services:
       - xpack.license.self_generated.type=${LICENSE:-basic}
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
-      - path.repo=/usr/share/elasticsearch/snapshots      
+      - path.repo=/usr/share/elasticsearch/snapshots
+      - node.attr.ilm_type=hot 
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -287,8 +290,7 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
-      - node.attr.box_type=hot
-      - node.attr.rack=rack1
+      - node.attr.ilm_type=hot
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -338,8 +340,7 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots      
-      - node.attr.box_type=warm
-      - node.attr.rack=rack1
+      - node.attr.ilm_type=warm
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -389,8 +390,7 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
-      - node.attr.box_type=cold
-      - node.attr.rack=rack1
+      - node.attr.ilm_type=cold
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
