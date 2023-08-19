@@ -1,3 +1,4 @@
+from operator import index
 import os
 import sys
 import re
@@ -5,7 +6,7 @@ import json
 import requests
 import urllib3
 import py3toolbox as tb
-
+import time
 
 
 
@@ -16,10 +17,10 @@ HEADERS = { 'Content-Type': 'application/json'  }
 
 def get_config() :
   config = {
-    "ES_HOST"     : "https://localhost:9200",
+    "ES_HOST"     : "https://nas1:9200",
     "ES_USERNAME" : "elastic",
     "ES_PASSWORD" : "password",
-    "ES_INDEX"    : "log_events"
+    "ES_INDEX"    : "log-events"
   }
   return config
 
@@ -46,22 +47,17 @@ def create_es_index(index_name, es_url, es_username, es_password):
     # Elasticsearch settings
     settings = {
         "settings": {
-            "number_of_shards": 6,
+            "number_of_shards": 1,
             "number_of_replicas": 1
         },
         "mappings": {
           "properties": {
-            "log_message": {
-              "type": "text",
-              "fields": {
-                "keyword": {
-                  "type": "keyword",
-                  "ignore_above": 256
-                }
-              }
+            "message": {
+              "type": "text"
             },
             "@timestamp": {
-
+              "type" : "date",
+              "format": "yyyy-MM-dd HH:mm:ss"
             }
           }
         }
@@ -75,44 +71,50 @@ def create_es_index(index_name, es_url, es_username, es_password):
         data=json.dumps(settings),
         verify=False
     )
-
     # Check the response status
     if response.status_code == 200:
         print(f'Index "{index_name}" created successfully.')
     else:
         print(f'Failed to create index "{index_name}". Status code: {response.status_code}')
 
-def load_es(es_data):
+
+def load_es():
   config = get_config()
   
-  delete_es_index( config['ES_INDEX'], config['ES_HOST'], config['ES_USERNAME'], config['ES_PASSWORD'] )
+  #delete_es_index( config['ES_INDEX'], config['ES_HOST'], config['ES_USERNAME'], config['ES_PASSWORD'] )
   create_es_index( config['ES_INDEX'], config['ES_HOST'], config['ES_USERNAME'], config['ES_PASSWORD'] )
 
-  for doc in es_data:
-    print (doc["category"])
-    # Make the HTTP POST request to Elasticsearch
-    response = requests.post(
-      config['ES_HOST'] + '/' + config['ES_INDEX'] + '/_doc',
-      headers=HEADERS,
-      auth=(config['ES_USERNAME'], config['ES_PASSWORD']),
-      data=json.dumps(doc),
-      verify=False
-    )
+  es_url = config["ES_HOST"]
+  index_name = config['ES_INDEX']
+  es_username = config["ES_USERNAME"]
+  es_password = config["ES_PASSWORD"]
 
-    # Check the response status
-    if response.status_code == 201:
-      #print('Data pushed to Elasticsearch successfully.')
-      pass
-    else:
-      print(f'Failed to push data to Elasticsearch. Status code: {response.status_code}')
+  url = f'{es_url}/{index_name}/_doc'
+  while True:
+    request = {
+      "@timestamp" : tb.get_timestamp() ,
+      "message"    : "message @ " + tb.get_timestamp()
+    }
+
+    response = requests.post(
+        url,
+        auth=(es_username, es_password),
+        headers=HEADERS,
+        data=json.dumps(request),
+        verify=False
+    )
+    print(json.dumps(request))
+    print(url)
+    print(response.status_code)
+    time.sleep(1);
+     
+
   print ("all done.")
 
 
 def main() : 
   config = get_config()
-  data = extract_zip(config["DATA_FILE"])
-  data = parse_data(data)
-  load_es(data)
+  load_es()
   pass
 
 

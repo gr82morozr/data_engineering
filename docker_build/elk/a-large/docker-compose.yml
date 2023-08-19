@@ -389,7 +389,7 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
-      - node.attr.box_type=code
+      - node.attr.box_type=cold
       - node.attr.rack=rack1
     #mem_limit: ${MEM_LIMIT}
     ulimits:
