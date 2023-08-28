@@ -3,7 +3,7 @@
 
 
 # Generate the .env file
-source ../elk.env
+source ./.env
 
 # created shared networks
 if [ "$(docker network ls | grep $NETWORK_NAME)" ]; then
@@ -14,7 +14,6 @@ else
 fi
 
 
-source ./.env
 
 # check system config
 max_map_count=$(cat /proc/sys/vm/max_map_count)

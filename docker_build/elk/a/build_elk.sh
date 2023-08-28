@@ -33,10 +33,10 @@ docker network prune -f
 docker volume prune -f
 
 
+source ../elk.env
 
 
-
-
+echo $ES_FOLDER/$ES_CLUSTER/
 cat << EOF > ./.env
 ELK_VERSION=$ELK_VERSION
 ES_FOLDER=$ES_FOLDER
@@ -46,6 +46,7 @@ KIBANA_PASSWORD=$KIBANA_PASSWORD
 ES_HEAP_SIZE=$ES_HEAP_SIZE
 LICENSE=$LICENSE
 MEM_LIMIT=$MEM_LIMIT
+NETWORK_NAME=$NETWORK_NAME
 EOF
 
 source ./.env
@@ -58,8 +59,12 @@ fi
 
 
 # cleanup local folders
+echo Cleanup $ES_FOLDER/$ES_CLUSTER/
 rm -fr $ES_FOLDER/$ES_CLUSTER
 check_result
+
+
+
 
 # create local folders
 mkdir -p $ES_FOLDER/$ES_CLUSTER/es-a1/data

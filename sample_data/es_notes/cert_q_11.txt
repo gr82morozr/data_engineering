@@ -1,0 +1,8 @@
+create a sample of beoow :
+
+
+1- create script store, and with params
+2- invoke the script in a search query
+
+
+

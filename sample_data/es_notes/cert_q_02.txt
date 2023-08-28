@@ -150,8 +150,8 @@ PUT _ingest/pipeline/earthquake_join
             ['type_id': 10, 'description': 'Extreme']
           ];
           for (item in earthquakeType) {
-            if (ctx._source.type_id == item.type_id) {
-              ctx._source.description = item.description;
+            if (ctx.type_id == item.type_id) {
+              ctx.description = item.description;
               break;
             }
           }
@@ -160,3 +160,5 @@ PUT _ingest/pipeline/earthquake_join
     }
   ]
 }
+
+

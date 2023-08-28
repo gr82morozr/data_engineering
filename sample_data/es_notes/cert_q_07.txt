@@ -1,0 +1,91 @@
+certification, practice question
+
+
+
+Task #1
+# Create the security role `francisco_role` in the native realm, so #    that:
+#    (i)  the role has "monitor" privileges on the cluster,
+#    (ii) the role has all privileges on the `hamlet` index
+# Create the user `francisco` with password "francisco-password"
+# Assign the role `francisco_role` to the `francisco` user
+
+# Login using the `francisco` user credentials, and run queries on
+#    `hamlet` to verify that the role privileges were correctly set
+
+
+
+Task #2
+# Create the security role `bernardo_role` in the native realm, so 
+#    that:
+#    (i)   the role has "monitor" privileges on the cluster,
+#    (ii)  the role has read-only privileges on the `hamlet` index,
+#    (iii) the role can see only those documents having "BERNARDO" 
+#          as a `speaker`,
+#    (iv)  the role can see only the `text_entry` field
+# Create the user `bernardo` with password "bernardo-password"
+# Assign the role `bernardo_role` to the `bernardo` user
+# Login using the `bernardo` user credentials, and run queries on 
+#    `hamlet` to verify that the role privileges were correctly set
+
+
+
+Task #3
+# Change the password of the `bernardo` user to "poor-bernardo"
+
+
+
+
+
+
+
+********************************************************************
+    Solution -
+********************************************************************
+
+
+Task #1 
+=============================================================
+POST hamlet/_doc
+{
+  "name" : "this is test"
+}
+
+
+
+PUT _security/role/francisco_role
+{
+  "cluster": [
+    "monitor"
+  ],
+  "indices": [
+    {
+      "names": [
+        "hamlet"
+      ],
+      "privileges": [
+        "all"
+      ]
+    }
+  ]
+}
+
+
+PUT _security/user/francisco
+{
+  "password": "francisco-password",
+  "roles": ["francisco_role"],
+  "full_name": "Francisco User"
+}
+
+
+Verify Task #1
+---------------------------
+  curl -k -X GET "https://localhost:8200/hamlet/_search" -u "francisco:francisco-password"
+  curl -k -X GET "https://localhost:8200/_cluster/health" -u "francisco:francisco-password"
+
+
+
+
+
+Task #2
+=============================================================

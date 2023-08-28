@@ -140,7 +140,6 @@ services:
       - xpack.monitoring.collection.enabled=true 
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
-      - node.attr.ilm_type=hot
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -190,7 +189,6 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
-      - node.attr.ilm_type=hot
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -240,7 +238,6 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
-      - node.attr.ilm_type=hot 
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -271,6 +268,8 @@ services:
       - elastic_net         
     environment:
       - node.name=es-a4
+      - node.roles=data_content,data_warm
+      - node.attr.ilm_type=warm      
       - cluster.name=${ES_CLUSTER:-elk-cluster}
       - cluster.initial_master_nodes=es-a1,es-a2,es-a3
       - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a5,es-a6
@@ -319,8 +318,10 @@ services:
       - snapshots:/usr/share/elasticsearch/snapshots      
     networks:
       - elastic_net         
-    environment:
+    environment: 
       - node.name=es-a5
+      - node.roles=data_content,data_cold
+      - node.attr.ilm_type=cold
       - cluster.name=${ES_CLUSTER:-elk-cluster}
       - cluster.initial_master_nodes=es-a1,es-a2,es-a3
       - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a4,es-a6
@@ -340,7 +341,6 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots      
-      - node.attr.ilm_type=warm
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -371,6 +371,8 @@ services:
       - elastic_net         
     environment:
       - node.name=es-a6
+      - node.roles=data_content,data_frozen
+      - node.attr.ilm_type=frozen
       - cluster.name=${ES_CLUSTER:-elk-cluster}
       - cluster.initial_master_nodes=es-a1,es-a2,es-a3
       - discovery.seed_hosts=es-a1,es-a2,es-a3,es-a4,es-a6
@@ -390,7 +392,6 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
-      - node.attr.ilm_type=cold
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:

@@ -14,6 +14,7 @@ import time
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 HEADERS = { 'Content-Type': 'application/json'  }
+INDEX_CREATED_TIME = time.time()
 
 def get_config() :
   config = {
@@ -27,18 +28,18 @@ def get_config() :
 
 
 def delete_es_index(index_name, es_url, es_username, es_password):
-    # Make the HTTP DELETE request to Elasticsearch
-    response = requests.delete(
-        f'{es_url}/{index_name}',
-        auth=(es_username, es_password),
-        verify=False
-    )
+  # Make the HTTP DELETE request to Elasticsearch
+  response = requests.delete(
+    f'{es_url}/{index_name}',
+    auth=(es_username, es_password),
+    verify=False
+  )
 
-    # Check the response status
-    if response.status_code == 200:
-        print(f'Index "{index_name}" deleted successfully.')
-    else:
-        print(f'Failed to delete index "{index_name}". Status code: {response.status_code}')
+  # Check the response status
+  if response.status_code == 200:
+    print(f'Index "{index_name}" deleted successfully.')
+  else:
+    print(f'Failed to delete index "{index_name}". Status code: {response.status_code}')
 
 def create_es_index(index_name, es_url, es_username, es_password):
     # Create the request URL
@@ -73,7 +74,8 @@ def create_es_index(index_name, es_url, es_username, es_password):
     )
     # Check the response status
     if response.status_code == 200:
-        print(f'Index "{index_name}" created successfully.')
+      INDEX_CREATED_TIME = time.time()
+      print(f'Index "{index_name}" created successfully.')
     else:
         print(f'Failed to create index "{index_name}". Status code: {response.status_code}')
 
@@ -90,10 +92,13 @@ def load_es():
   es_password = config["ES_PASSWORD"]
 
   url = f'{es_url}/{index_name}/_doc'
+  count = 0
   while True:
+    count +=1
+    time_elipsed = str(time.time() - INDEX_CREATED_TIME)
     request = {
       "@timestamp" : tb.get_timestamp() ,
-      "message"    : "message @ " + tb.get_timestamp()
+      "message"    : str(count) + " : " + time_elipsed + "s -  message @ " + tb.get_timestamp()
     }
 
     response = requests.post(
@@ -104,11 +109,9 @@ def load_es():
         verify=False
     )
     print(json.dumps(request))
-    print(url)
     print(response.status_code)
     time.sleep(1);
-     
-
+ 
   print ("all done.")
 
 

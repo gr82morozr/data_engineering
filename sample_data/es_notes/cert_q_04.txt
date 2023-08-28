@@ -4,7 +4,8 @@ certification, practice question
 在clust1中配置ccr,远程连接cluster2中的index。 采用CCR的标准方法,remote cluster配置,role配置,fllow-index配置。
 注意：要记得kibana设定 license。
 
-
+Configure a cluster for cross-cluster search
+Implement cross-cluster replication
 
 
 

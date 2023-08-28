@@ -116,6 +116,7 @@ services:
       - xpack.monitoring.collection.enabled=true 
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
+      - node.attr.size=small
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -165,6 +166,7 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
+      - node.attr.size=big
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -213,7 +215,8 @@ services:
       - xpack.license.self_generated.type=${LICENSE:-basic}
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
-      - path.repo=/usr/share/elasticsearch/snapshots      
+      - path.repo=/usr/share/elasticsearch/snapshots   
+      - node.attr.size=big   
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:

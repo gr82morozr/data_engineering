@@ -1,0 +1,15 @@
+# Create the index `hamlet_1` with one primary shard and no replicas
+# Define a mapping for the default type "_doc" of `hamlet_1`, so 
+#    that (i) the type has three fields, named `speaker`, 
+#    `line_number`, and `text_entry`, (ii) `speaker` and 
+#    `line_number` are unanalysed strings
+# Furthermore, I want you to disable aggregations on the “line_number” field
+
+
+
+
+
+
+
+
+

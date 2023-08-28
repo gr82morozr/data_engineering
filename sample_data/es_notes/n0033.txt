@@ -1,0 +1,28 @@
+
+
+
+ES allocation awareness and forced awareness
+
+
+1 - Step 1, need to update EACH node with node.attr to reflect the "zone", "location", "rack" ... 
+    This is staic setting, can NOT be done by API
+    
+    For example : node.attr.rack_id: rack_one 
+
+
+2 - set below to make sure ES is AWARE of this partilucar attr is used for allocation.
+
+  PUT _cluster/settings
+  {
+    "persistent" : {
+      "cluster.routing.allocation.exclude._name" : null,
+      "cluster.routing.allocation.awareness.attributes" : "rack_id",
+      "cluster.routing.allocation.awareness.force.rack_id.values": "rack_1,rack_2"
+    }
+  }
+
+
+3 -  ES tens to assign the replica on difference "rack_id", "zone", "location" ... 
+    if no node is avaliable in "reack_2", then replica is un-assigned.
+    
+
