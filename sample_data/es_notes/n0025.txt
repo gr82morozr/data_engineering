@@ -8,7 +8,7 @@ search template
   
 1 - create search template
 
-2 - render r the template (fill tghe param to see how template look like)
+2 - render r the template (fill the param to see how template look like)
 
 
 

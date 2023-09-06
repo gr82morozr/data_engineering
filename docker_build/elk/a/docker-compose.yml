@@ -7,7 +7,7 @@ services:
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
     networks:
-      - elastic_net      
+      - elastic_net
     user: "0"
     command: >
       bash -c '
@@ -91,7 +91,7 @@ services:
       - es_a1_logs:/usr/share/elasticsearch/logs
       - snapshots:/usr/share/elasticsearch/snapshots
     networks:
-      - elastic_net         
+      - elastic_net
     ports:
       - 9200:9200
     environment:
@@ -116,7 +116,7 @@ services:
       - xpack.monitoring.collection.enabled=true 
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
-      - node.attr.size=small
+      - node.attr.node_type=hot
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -144,7 +144,7 @@ services:
       - es_a2_logs:/usr/share/elasticsearch/logs
       - snapshots:/usr/share/elasticsearch/snapshots      
     networks:
-      - elastic_net         
+      - elastic_net
     environment:
       - node.name=es-a2
       - cluster.name=${ES_CLUSTER:-elk-cluster}
@@ -166,7 +166,7 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots
-      - node.attr.size=big
+      - node.attr.node_type=warm
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -194,7 +194,7 @@ services:
       - es_a3_logs:/usr/share/elasticsearch/logs
       - snapshots:/usr/share/elasticsearch/snapshots      
     networks:
-      - elastic_net         
+      - elastic_net
     environment:
       - node.name=es-a3
       - cluster.name=${ES_CLUSTER:-elk-cluster}
@@ -216,7 +216,7 @@ services:
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
       - path.repo=/usr/share/elasticsearch/snapshots   
-      - node.attr.size=big   
+      - node.attr.node_type=warm
     #mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
@@ -244,7 +244,7 @@ services:
       - certs:/usr/share/kibana/config/certs
       - kibanadata:/usr/share/kibana/data
     networks:
-      - elastic_net         
+      - elastic_net
     ports:
       - 5601:5601
     environment:

@@ -1,6 +1,9 @@
+document deletion
 
+when you delete a document in Elasticsearch, it's often referred to as a "soft delete." 
+The document is marked as deleted but is not immediately removed from the index. Instead, 
+the space that the document occupied is reclaimed during a later segment merge operation.
 
-, when you delete a document in Elasticsearch, it's often referred to as a "soft delete." The document is marked as deleted but is not immediately removed from the index. Instead, the space that the document occupied is reclaimed during a later segment merge operation.
 
 Here's a bit more detail about how this works:
 
@@ -8,6 +11,10 @@ Marked as Deleted: When you delete a document, it is marked as deleted in the se
 
 Still Consumes Space: The document continues to consume disk space until a segment merge occurs.
 
-Segment Merges: Over time, Elasticsearch periodically merges smaller segments into larger ones. During this merge process, documents that have been marked as deleted are ignored, and the space they occupied is reclaimed. The merge process thus "hard deletes" the documents by excluding them from the newly merged segment.
+Segment Merges: Over time, Elasticsearch periodically merges smaller segments into larger ones. 
+During this merge process, documents that have been marked as deleted are ignored, 
+and the space they occupied is reclaimed. The merge process thus "hard deletes" the documents by excluding them from the newly merged segment.
 
-Force Merge: You can force a merge using the Force Merge API, which can reclaim space from deleted documents more quickly. However, this operation is typically heavy on system resources, so it should be used judiciously.
+Force Merge: You can force a merge using the Force Merge API, which can reclaim space from deleted documents more quickly.
+However, this operation is typically heavy on system resources, so it should be used judiciously.
+

@@ -2,6 +2,10 @@
 index template, component template , dynamic template
 
 
+*** index template - template based on certain INDEX NAME patterns.
+*** component template - just re-useable index template.
+*** dynamic template - MAPPING template based on FILED NAME patterns
+
 
 
 PUT _component_template/mysettings
@@ -53,7 +57,7 @@ PUT my-dynamic-template-demo-index
 }
 
 
-* "match_mapping_type": "string", the strin gis unmapped data type:
+* "match_mapping_type": "string", the string is unmapped data type: 
   possible values are [object, string, long, double, boolean, date, binary]"
 
 

@@ -5,7 +5,7 @@ ILM explaination.
     Regular Index ILM
 ***********************************************************
 
-1 - rollover is only defined in HOT phase. If no rollover defined, the SANE index will move to next phase,
+1 - rollover is only defined in HOT phase. If no rollover defined, the SAME index will move to next phase,
     and eventually may gets deleted, this may cause problem when client still pushing data into the index (it creats new index , with the name of alias)
 
 2 - the "min_age"  is calculated from last rollover time, if no rollover defined, will be the creation time.  

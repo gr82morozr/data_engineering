@@ -18,7 +18,7 @@ INDEX_CREATED_TIME = time.time()
 
 def get_config() :
   config = {
-    "ES_HOST"     : "https://nas1:9200",
+    "ES_HOST"     : "https://localhost:9200",
     "ES_USERNAME" : "elastic",
     "ES_PASSWORD" : "password",
     "ES_INDEX"    : "log-events"
@@ -84,7 +84,7 @@ def load_es():
   config = get_config()
   
   #delete_es_index( config['ES_INDEX'], config['ES_HOST'], config['ES_USERNAME'], config['ES_PASSWORD'] )
-  create_es_index( config['ES_INDEX'], config['ES_HOST'], config['ES_USERNAME'], config['ES_PASSWORD'] )
+  #create_es_index( config['ES_INDEX'], config['ES_HOST'], config['ES_USERNAME'], config['ES_PASSWORD'] )
 
   es_url = config["ES_HOST"]
   index_name = config['ES_INDEX']

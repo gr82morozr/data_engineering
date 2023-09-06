@@ -3,7 +3,8 @@ Data Stream, Index, difference
 ============== From ChatGPT ================
 
 
-A data stream in Elasticsearch is a high-level construct that supports append-only operations. It represents a series of indices that are used to store time-series data, such as logs and metrics. Here's an overview of data streams:
+A data stream in Elasticsearch is a high-level construct that supports append-only operations.
+It represents a series of indices that are used to store time-series data, such as logs and metrics. Here's an overview of data streams:
 
 Immutable: Once data is written to a data stream, it cannot be updated or deleted.
 Time-Series Data: Ideal for time-based data that continuously grows, like logs or metrics.

@@ -50,6 +50,9 @@ Consistency: Since it's a "live" cursor, changes to the data between requests mi
 Performance: Generally more efficient compared to scroll, especially when skipping many pages.
 Ease of Use: Can be more complex to implement compared to scroll because you have to manage the sort values for the cursor.
 Resource Intensity: Typically lighter on cluster resources since it doesn't maintain a snapshot of the data.
+
+
+ 
 2. scroll API
 The scroll API is used to retrieve large numbers of documents from Elasticsearch efficiently without the system struggling with memory pressure.
 

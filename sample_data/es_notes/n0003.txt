@@ -18,7 +18,8 @@ and
 
 =================================== from chatGPT  ===================================
 
-The difference between the two JSON objects you provided is related to the context in which they are used, specifically the structure and the operation being performed.
+The difference between the two JSON objects you provided is related to the context in which they are used, 
+specifically the structure and the operation being performed.
 
 _source:
 
@@ -29,8 +30,12 @@ Copy code
       "field_name" : "field_value"
   }
 }
-The _source field is commonly used in the context of search results in Elasticsearch. When you query an index and receive documents as a result, the original JSON representing each document is returned in the _source field. It is not typically used when creating or indexing a new document.
+The _source field is commonly used in the context of search results in Elasticsearch. 
+When you query an index and receive documents as a result, the original JSON representing each document is returned in the _source field. 
+It is not typically used when creating or indexing a new document.
 
+
+-----------------------------------------------------------------------------------
 doc:
 
 json
@@ -39,7 +44,9 @@ json
           "field_name" : "field_value"
       }
     }
-The doc structure might be used when you are performing an update to an existing document using the Update API. In this context, the doc field contains the partial document with the fields you want to update.
+The doc structure might be used when you are performing an update to an existing document using the Update API. 
+In this context, the doc field contains the partial document with the fields you want to update.
+
 
 Here's an example of how you might use the doc structure to update an existing document:
 
@@ -51,7 +58,12 @@ json
         "field_name": "new_field_value"
       }
     }
-In the case of indexing or creating a new document, you would typically just provide the JSON object representing the document directly, without wrapping it in either _source or doc. For example:
+
+
+
+In the case of indexing or creating a new document, you would typically just provide the JSON object representing the document directly,
+without wrapping it in either _source or doc. 
+For example:
 
 json
 
@@ -59,7 +71,8 @@ json
     {
       "field_name": "field_value"
     }
-So, the appropriate structure to use depends on the specific operation you are performing in Elasticsearch, whether it's querying, updating, or indexing a document.
+So, the appropriate structure to use depends on the specific operation you are performing in Elasticsearch, 
+whether it's querying, updating, or indexing a document.
 
 
 
