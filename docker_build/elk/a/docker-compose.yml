@@ -47,6 +47,18 @@ services:
           "      - localhost\n"\
           "    ip:\n"\
           "      - 127.0.0.1\n"\
+          "  - name: kibana\n"\
+          "    dns:\n"\
+          "      - kibana\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
+          "  - name: fleet-svr\n"\
+          "    dns:\n"\
+          "      - fleet-svr\n"\
+          "      - localhost\n"\
+          "    ip:\n"\
+          "      - 127.0.0.1\n"\
           > config/certs/instances.yml;
           bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
           unzip config/certs/certs.zip -d config/certs;
@@ -60,7 +72,7 @@ services:
         find . -type f -exec chmod 666 \{\} \;;
         
         echo "Waiting for Elasticsearch availability ...";
-        until curl -s --cacert config/certs/ca/ca.crt https://es-a1:9200 | grep -q "missing authentication credentials"; do sleep 10; done;
+        until curl -s -X GET --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD:-password}" -H "Content-Type: application/json" https://es-a1:9200 | grep -q "You Know, for Search"; do sleep 10; done;
 
         echo "Setting kibana_system password ...";
         until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD:-password}" -H "Content-Type: application/json" https://es-a1:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD:-password}\"}" | grep -q "^{}"; do sleep 5; done;
@@ -68,8 +80,8 @@ services:
         echo "Setting Trial licence...";
         until curl -s -X POST --cacert config/certs/ca/ca.crt -u "elastic:${ELASTIC_PASSWORD:-password}" -H "Content-Type: application/json" https://es-a1:9200/_license/start_trial?acknowledge=true  | grep -q "trial_was_started"; do sleep 5; done;
 
-        echo "Setting Kibana dark mode...";
-        until curl -s -X PUT  -u "elastic:${KIBANA_PASSWORD:-password}" -H "kbn-xsrf: true" -H "Content-Type: application/json" http://kibana:5601/api/saved_objects/config/"${ELK_VERSION:-8.8.2}"   -d "{\"attributes\":  { \"theme:darkMode\" : true} }" | grep -q "updated_at"; do sleep 5; done;
+        #echo "Setting Kibana dark mode...";
+        #until curl -s -X PUT  -u "elastic:${KIBANA_PASSWORD:-password}" -H "kbn-xsrf: true" -H "Content-Type: application/json" https://kibana:5601/api/saved_objects/config/"${ELK_VERSION:-8.8.2}"   -d "{\"attributes\":  { \"theme:darkMode\" : true} }" | grep -q "updated_at"; do sleep 5; done;
 
         echo "All done!";
       '
@@ -81,7 +93,8 @@ services:
 
   es-a1:
     depends_on:
-      - setup
+      setup:
+        condition: service_healthy
     image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
     container_name: es-a1
     hostname: es-a1
@@ -99,7 +112,6 @@ services:
       - cluster.name=${ES_CLUSTER:-elk-cluster}
       - cluster.initial_master_nodes=es-a1,es-a2,es-a3
       - discovery.seed_hosts=es-a2,es-a3
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-password}
       - bootstrap.memory_lock=true
       - xpack.security.enabled=true
       - xpack.security.authc.api_key.enabled=true
@@ -115,9 +127,10 @@ services:
       - xpack.license.self_generated.type=${LICENSE:-basic}
       - xpack.monitoring.collection.enabled=true 
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-password}
       - path.repo=/usr/share/elasticsearch/snapshots
       - node.attr.node_type=hot
-    #mem_limit: ${MEM_LIMIT}
+    mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
         soft: -1
@@ -126,7 +139,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+          "curl -s -u ${ELASTIC_USERNAME}:${ELASTIC_PASSWORD}  --cacert config/certs/ca/ca.crt https://es-a1:9200 | grep -q 'You Know, for Search'"
         ]
       interval: 10s
       timeout: 10s
@@ -134,7 +147,8 @@ services:
 
   es-a2:
     depends_on:
-      - es-a1
+      setup:
+        condition: service_healthy
     image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
     container_name: es-a2
     hostname: es-a2
@@ -145,6 +159,8 @@ services:
       - snapshots:/usr/share/elasticsearch/snapshots      
     networks:
       - elastic_net
+    ports:
+      - 9201:9200      
     environment:
       - node.name=es-a2
       - cluster.name=${ES_CLUSTER:-elk-cluster}
@@ -165,9 +181,10 @@ services:
       - xpack.license.self_generated.type=${LICENSE:-basic}
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-password}
       - path.repo=/usr/share/elasticsearch/snapshots
       - node.attr.node_type=warm
-    #mem_limit: ${MEM_LIMIT}
+    mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
         soft: -1
@@ -176,7 +193,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+          "curl -s -u ${ELASTIC_USERNAME}:${ELASTIC_PASSWORD}  --cacert config/certs/ca/ca.crt https://es-a2:9200 | grep -q 'You Know, for Search'"
         ]
       interval: 10s
       timeout: 10s
@@ -184,7 +201,8 @@ services:
 
   es-a3:
     depends_on:
-      - es-a2
+      setup:
+        condition: service_healthy
     image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
     container_name: es-a3
     hostname: es-a3
@@ -195,6 +213,8 @@ services:
       - snapshots:/usr/share/elasticsearch/snapshots      
     networks:
       - elastic_net
+    ports:
+      - 9202:9200      
     environment:
       - node.name=es-a3
       - cluster.name=${ES_CLUSTER:-elk-cluster}
@@ -215,9 +235,10 @@ services:
       - xpack.license.self_generated.type=${LICENSE:-basic}
       - xpack.monitoring.collection.enabled=true
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-password}
       - path.repo=/usr/share/elasticsearch/snapshots   
       - node.attr.node_type=warm
-    #mem_limit: ${MEM_LIMIT}
+    mem_limit: ${MEM_LIMIT}
     ulimits:
       memlock:
         soft: -1
@@ -226,7 +247,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+          "curl -s -u ${ELASTIC_USERNAME}:${ELASTIC_PASSWORD}  --cacert config/certs/ca/ca.crt https://es-a3:9200 | grep -q 'You Know, for Search'"
         ]
       interval: 10s
       timeout: 10s
@@ -234,9 +255,12 @@ services:
 
   kibana:
     depends_on:
-      - es-a1
-      - es-a2
-      - es-a3
+      es-a1:
+        condition: service_healthy
+      es-a2:
+        condition: service_healthy
+      es-a3:
+        condition: service_healthy   
     image: docker.elastic.co/kibana/kibana:${ELK_VERSION:-8.8.2}
     container_name: kibana
     hostname: kibana
@@ -255,13 +279,20 @@ services:
       #- ELASTICSEARCH_USERNAME=elastic # for older version of ELK
       - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-password}
       - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
+      - SERVER_SSL_ENABLED=true
+      - SERVER_SSL_CERTIFICATE=config/certs/kibana/kibana.crt
+      - SERVER_SSL_KEY=config/certs/kibana/kibana.key
+      - SERVER_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt      
       - 'ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}'
-    #mem_limit: ${MEM_LIMIT}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_SECURITY_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_REPORTING_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+    mem_limit: ${MEM_LIMIT}
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+          "curl -s --cacert config/certs/ca/ca.crt https://kibana:5601/login | grep -q '<title>Elastic</title>'"
         ]
       interval: 10s
       timeout: 10s

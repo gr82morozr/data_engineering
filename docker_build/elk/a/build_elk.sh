@@ -24,7 +24,8 @@ check_and_stop_container() {
 # bring down services
 source ./.env
 check_and_stop_container filebeat
-check_and_stop_container fleet
+check_and_stop_container fleet-svr
+check_and_stop_container agent
 docker compose down --volumes --remove-orphans
 
 # remove unused resources
@@ -34,20 +35,7 @@ docker volume prune -f
 
 
 source ../elk.env
-
-
-echo $ES_FOLDER/$ES_CLUSTER/
-cat << EOF > ./.env
-ELK_VERSION=$ELK_VERSION
-ES_FOLDER=$ES_FOLDER
-ES_CLUSTER=${ES_CLUSTER}_a
-ELASTIC_PASSWORD=$ELASTIC_PASSWORD
-KIBANA_PASSWORD=$KIBANA_PASSWORD
-ES_HEAP_SIZE=$ES_HEAP_SIZE
-LICENSE=$LICENSE
-MEM_LIMIT=$MEM_LIMIT
-NETWORK_NAME=$NETWORK_NAME
-EOF
+cp ../elk.env ./.env
 
 source ./.env
 

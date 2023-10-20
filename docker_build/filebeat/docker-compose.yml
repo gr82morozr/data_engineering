@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  # Filebeat setup service
+  filebeat-setup:
+    image: docker.elastic.co/beats/filebeat:${ELK_VERSION}
+    container_name: filebeat-setup
+    command: ["filebeat", "setup" ]
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./certs/ca.crt:/usr/share/filebeat/config/certs/ca.crt
+    networks:
+      - elastic_net
+  # Filebeat service
+  filebeat:
+    depends_on:
+      - filebeat-setup
+    image: docker.elastic.co/beats/filebeat:${ELK_VERSION}
+    ports:
+      - "2514:514/udp"
+    container_name: filebeat
+    command: ["filebeat", "-e", "--strict.perms=false"]
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./certs/ca.crt:/usr/share/filebeat/config/certs/ca.crt
+    networks:
+      - elastic_net
+
+networks:
+  elastic_net:
+    external: true
