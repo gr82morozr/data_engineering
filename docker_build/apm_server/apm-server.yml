@@ -128,7 +128,7 @@ apm-server:
   # RUM does not support token based authorization. Enabled RUM endpoints will not require any authorization
   # token configured for other endpoints.
   rum:
-    enabled: false
+    enabled: true
  
     #-- General RUM settings
 
