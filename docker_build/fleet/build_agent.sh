@@ -50,7 +50,7 @@ get_enrollment_token() {
 
 
 
-docker compose -f ./docker-compose.agent.yml down --remove-orphans
+docker compose -f ./docker-compose.agent.yml down 
 docker rm agent
 
 create_agent_policy

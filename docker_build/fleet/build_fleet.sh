@@ -104,7 +104,13 @@ add_fleet_server_integration_to_policy() {
   echo ================================================
   echo  Step 3 - Adding Fleet server integration 
   echo
-   
+
+
+  latestVersion=$(curl -s --cacert ./certs/ca.crt -u elastic:${KIBANA_PASSWORD} --request GET \
+    --url https://kibana:5601/api/fleet/epm/packages/fleet_server \
+    --header 'content-type: application/json' \
+    --header 'kbn-xsrf: true' | jq -r '.item.latestVersion')
+
   response=$(curl -s --cacert ./certs/ca.crt -u elastic:${KIBANA_PASSWORD} --request POST \
     --url https://kibana:5601/api/fleet/package_policies \
     --header 'content-type: application/json' \
