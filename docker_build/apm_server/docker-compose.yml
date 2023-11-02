@@ -3,7 +3,11 @@ version: "3.8"
 
 services:
   apm-svr:
-    image: docker.elastic.co/apm/apm-server:${ELK_VERSION:-8.8.2}
+    #image: docker.elastic.co/apm/apm-server:${ELK_VERSION:-8.10.2}
+    image: apm-svr:${ELK_VERSION}
+    build:
+      context: . 
+      dockerfile: Dockerfile 
     container_name: apm-svr 
     ports:
       - 8200:8200
@@ -13,6 +17,15 @@ services:
     networks:
       - elastic_net
     mem_limit: 1g
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -i http://apm-svr:8200  | grep -q 'HTTP/1.1 200 OK'"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
       
 volumes:
   certs:
@@ -20,7 +33,7 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device:  ./certs
+      device: ./certs
 
 networks:
   elastic_net:

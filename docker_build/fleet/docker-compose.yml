@@ -46,7 +46,16 @@ services:
       - FLEET_URL=https://fleet-svr:8220
       - FLEET_CA=/usr/share/elastic-agent/certs/ca.crt
       #- FLEET_INSECURE=true
-
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -k --cacert config/certs/ca/ca.crt https://fleet-svr:8220 | grep -q '404 page not found'"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+      
 volumes:
   certs:
     driver: local

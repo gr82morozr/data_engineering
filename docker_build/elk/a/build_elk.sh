@@ -23,7 +23,9 @@ check_and_stop_container() {
 
 # bring down services
 source ./.env
+check_and_stop_container metricbeat
 check_and_stop_container filebeat
+check_and_stop_container apm-svr
 check_and_stop_container fleet-svr
 check_and_stop_container agent
 docker compose down --volumes --remove-orphans
