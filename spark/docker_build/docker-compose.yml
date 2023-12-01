@@ -2,46 +2,86 @@ version: '3'
 
 services:
   spark-master:
-    image: bitnami/spark:latest
+    image: spark:latest
     container_name: spark-master
+    hostname: spark-master
+    command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.master.Master -h spark-master"
     ports:
       - "8080:8080"
-      - "7077:7077"
-    environment:
-      - SPARK_MODE=master
+      - "7077:7077"    
     networks:
       - spark-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G      
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://spark-master:8080 | grep -qE 'Spark Master at spark://spark-master:7077'"]
+      interval: 10s
+      timeout: 240s
+      retries: 24
 
   spark-worker1:
-    image: bitnami/spark:latest
+    image: spark:latest
     container_name: spark-worker1
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
+    hostname: spark-worker1
+    command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"
     networks:
       - spark-network
+    depends_on:
+      - spark-master
+    deploy:
+      resources:
+        limits:
+          memory: 2G      
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://spark-master:8080 | grep -qE 'Spark Master at spark://spark-master:7077'"]
+      interval: 10s
+      timeout: 240s
+      retries: 24
 
   spark-worker2:
-    image: bitnami/spark:latest
+    image: spark:latest
     container_name: spark-worker2
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
+    hostname: spark-worker2
+    command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"        
     networks:
       - spark-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G      
+    depends_on:
+      - spark-master          
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://spark-master:8080 | grep -qE 'Spark Master at spark://spark-master:7077'"]
+      interval: 10s
+      timeout: 240s
+      retries: 24
 
   spark-worker3:
-    image: bitnami/spark:latest
+    image: spark:latest
     container_name: spark-worker3
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
+    hostname: spark-worker3
+    command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"            
     networks:
       - spark-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G      
+    depends_on:
+      - spark-master          
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://spark-master:8080 | grep -qE 'Spark Master at spark://spark-master:7077'"]
+      interval: 10s
+      timeout: 240s
+      retries: 24
 
   jupyterlab:
     image: jupyter/pyspark-notebook
     container_name: jupyterlab
+    hostname: jupyterlab
     ports:
       - "8888:8888"
     command: start-notebook.sh --NotebookApp.token=''
@@ -55,18 +95,35 @@ services:
       - ./notebooks:/home/jovyan/work
     networks:
       - spark-network
+    depends_on:
+      - spark-master      
+      - spark-worker1
+      - spark-worker2
+      - spark-worker3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   zookeeper:
     image: wurstmeister/zookeeper
     container_name: zookeeper
+    hostname: zookeeper    
     ports:
       - "2181:2181"
     networks:
       - spark-network
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181", "|", "grep", "imok"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   kafka:
     image: wurstmeister/kafka
     container_name: kafka
+    hostname: kafka
     ports:
       - "9092:9092"
     environment:
@@ -79,7 +136,11 @@ services:
       - zookeeper
     networks:
       - spark-network
-
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list | grep test-topic"]
+      interval: 1m
+      timeout: 10s
+      retries: 3
 
 networks:
   spark-network:
