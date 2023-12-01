@@ -1,0 +1,47 @@
+query summary
+
+
+1 - Simple Match Query
+
+2 - Match all query
+
+3 - Term Query
+
+4 - Range Query
+
+5 - IDs Search
+
+6 - Multiple Terms Query
+
+7 - Exists Query
+
+8 - Prefix Query
+
+9 - Wildcard Search
+
+10 - RegExp Search
+
+11 - Match Phrase Query
+
+12 - Multi Match Query
+
+
+13 - Match Boiol Prefix Query
+
+
+14 - Match Bool Must Query
+
+
+15 - Match Bool Should Query
+
+16 - Match Bool Must Not Query
+
+17 - Match Phrase Prefix Query
+
+18 - Fuzzy query
+
+
+19 - Filter Query
+
+20 - Named Query
+

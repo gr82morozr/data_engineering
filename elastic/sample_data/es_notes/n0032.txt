@@ -1,0 +1,27 @@
+For shrink operation.
+
+
+It needs to create new index as "shrinked" index.
+
+step 1 - move all shards to SINGLE node with write block = true
+  PUT source_index/_settings
+  {
+    "index.routing.allocation.require._name": "es-a1",
+    "blocks.write": true
+  }
+
+  it doesn't move all shards, just move a set of shards (either P or R) to single node, 
+  to make sure that node containscomplete set of data.
+
+
+step 2 - invoke shrink API.
+
+PUT /test-01/_shrink/test-02
+{
+  "settings" : {
+    "index.routing.allocation.require._name": null,    // remove this, othewrise the Replica specified here cannot be allocated, UnASSIGNED error may occur
+    "number_of_shards" : 1,
+    "number_of_replicas" : 1,
+    "blocks.write": false           // enable write.
+  }
+}

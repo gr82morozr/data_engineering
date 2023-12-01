@@ -1,0 +1,14 @@
+Query, DSL, match
+
+
+If need to match two term with "OR", no need to run boolean search, just below
+
+
+GET kibana_sample_data_logs/_search
+{
+  "query" : {
+    "match": {
+      "message": "firefox kibana"
+    }
+  }
+}

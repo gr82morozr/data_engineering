@@ -1,0 +1,25 @@
+Standard analyzer including what ?
+
+============================================
+The Standard Analyzer is equivalent to:
+
+{
+  "type": "custom",
+  "tokenizer": "standard",
+  "filter": ["lowercase", "standard"]
+}
+
+There is no char_filters at all in it
+============================================
+
+
+To customize it,
+Just adding more settings as this
+
+
+
+
+
+
+
+

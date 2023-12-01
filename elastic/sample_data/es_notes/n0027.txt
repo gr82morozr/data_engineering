@@ -1,0 +1,42 @@
+ingest pipeline
+
+
+==========================================================
+
+
+PUT _ingest/pipeline/my-pipeline
+{
+  "description": "my test pipeline",
+  "version": 123,
+  "processors": [
+    {
+      "lowercase": {
+        "field": "my-text",
+        "ignore_missing": true
+      }
+    }
+  ]
+}
+
+
+
+
+GET _ingest/pipeline/my-pipeline/_simulate
+{
+  "docs" : [
+    {
+      "_source" : {
+        "my-text" : "TEST HELLO WORLD"
+      }
+    }
+  ]
+}
+
+
+
+Default Pipeline: Automatically applied if no other pipeline is specified in the request. Useful for common transformations that should be applied by default.
+Final Pipeline: Always applied, even if another pipeline is specified in the request. Useful for enforcing transformations that should always be applied.
+
+In index settings : 
+  "index.default_pipeline" : xxxxx
+  "index.final_pipeline"   : xxxxx

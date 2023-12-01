@@ -1,0 +1,93 @@
+
+Define and use an ingest pipeline that satifies a given set of requirements.
+including use of painless script to modify document.
+
+
+1 - Addresses index, create full address by painless in ingestion pipeline => re-index to task1
+
+2 - sales_data create avg price (total price / number of  product) by painless in ingest pipeline => reindex to task2
+
+
+
+
+
+
+#################################################
+ Task #1 - Solution
+#################################################
+
+PUT _ingest/pipeline/my-addresses-pipeline
+{
+  "description": "my test pipeline",
+  "processors": [
+    {
+      "script": {
+        "source": """
+          ctx.full_address = ctx.NUMBER + ',' + ctx.UNIT + ',' + ctx.STREET + ',' + ctx.POSTCODE;
+        """
+      }
+    }
+  ]
+}
+
+
+POST _reindex
+{
+  "source": {
+    "index": "addresses"
+  },
+  "dest": {
+    "index": "task1",
+    "pipeline": "my-addresses-pipeline"
+  }
+}
+
+
+GET task1/_search
+{
+  "fields": [
+    "full_address"
+  ]
+}
+
+
+
+
+#################################################
+ Task #2 - Solution
+#################################################
+
+
+GET sales_data/_search
+
+
+PUT _ingest/pipeline/my-sales-data-pipeline
+{
+  "description": "my test pipeline 2",
+  "processors": [
+    {
+      "script": {
+        "source": """
+          ctx.avg_price = ctx.taxful_total_price / ctx.total_unique_products;
+        
+        """
+      }
+    }
+  ]
+}
+
+
+POST _reindex
+{
+  "source": {
+    "index": "sales_data"
+  },
+  "dest": {
+    "index": "task3",
+    "pipeline": "my-sales-data-pipeline"
+  }
+}
+
+
+GET task3/_count
+

@@ -1,0 +1,70 @@
+Paging, Pagenation
+
+
+
+https://www.elastic.co/guide/en/elasticsearch/reference/8.1/paginate-search-results.html#search-after
+
+
+1- basic way - using from
+
+GET /_search
+{
+  "from": 5,
+  "size": 20,
+  "query": {
+    "match": {
+      "user.id": "kimchy"
+    }
+  }
+}
+
+Search requests usually span multiple shards. Each shard must load its requested hits and the hits for any previous pages into memory.
+these operations can significantly increase memory and CPU usage,
+
+
+2 - scroll api 
+
+We no longer recommend using the scroll API for deep pagination. 
+If you need to preserve the index state while paging through more than 10,000 hits, 
+use the search_after parameter with a point in time (PIT).
+
+
+While a search request returns a single “page” of results, the scroll API can be used to retrieve large numbers of results 
+(or even all results) from a single search request, in much the same way as you would use a cursor on a traditional database.
+
+2 - use search_after
+
+
+
+
+
+
+---------------- chatGPT response -------------------
+
+1. search_after API
+The search_after parameter is used for paginating through a large result set and is generally suitable for real-time user requests.
+
+Use Case: Ideal for real-time search applications, where users might jump to later pages.
+Implementation: Utilizes a "live" cursor. You specify the sort values of the last result in the previous page, and Elasticsearch will return the next set of results.
+Consistency: Since it's a "live" cursor, changes to the data between requests might affect the results in subsequent pages.
+Performance: Generally more efficient compared to scroll, especially when skipping many pages.
+Ease of Use: Can be more complex to implement compared to scroll because you have to manage the sort values for the cursor.
+Resource Intensity: Typically lighter on cluster resources since it doesn't maintain a snapshot of the data.
+
+
+ 
+2. scroll API
+The scroll API is used to retrieve large numbers of documents from Elasticsearch efficiently without the system struggling with memory pressure.
+
+Use Case: Suitable for batch processing and exporting large data sets, not ideal for real-time user requests.
+Implementation: It creates a snapshot of the search context to ensure a consistent view of the data for the duration of the scroll.
+Consistency: Because it maintains a snapshot, the results are consistent across different scroll requests, even if the underlying data changes.
+Performance: Can be less efficient if you want to jump to a later page since you need to scroll through the results sequentially.
+Ease of Use: Generally easier to implement for sequential reading compared to search_after.
+Resource Intensity: Can be heavier on cluster resources, especially with very long scroll durations, since it maintains a snapshot of the search context.
+Summary
+Use search_after for real-time search use cases where you need to paginate through results efficiently.
+Use scroll for batch processing or exporting large data sets where consistency during the retrieval process is important.
+In choosing between the two, it's essential to understand the specific requirements of your application and choose the one that aligns with your needs for consistency, performance, and resource utilization.
+
+

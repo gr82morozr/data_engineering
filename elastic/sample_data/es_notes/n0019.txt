@@ -1,0 +1,22 @@
+Data Stream, Index, difference
+
+============== From ChatGPT ================
+
+
+A data stream in Elasticsearch is a high-level construct that supports append-only operations.
+It represents a series of indices that are used to store time-series data, such as logs and metrics. Here's an overview of data streams:
+
+Immutable: Once data is written to a data stream, it cannot be updated or deleted.
+Time-Series Data: Ideal for time-based data that continuously grows, like logs or metrics.
+Management: Manages a series of hidden indices behind the scenes, rolling over to new indices based on specified criteria (e.g., size, age).
+Simplifies Operations: You interact with the data stream rather than individual indices, which can simplify querying and management.
+Regular Index
+A regular index in Elasticsearch is a basic construct where data is stored. Unlike a data stream:
+
+Mutable: You can update and delete documents within a regular index.
+General Purpose: Suitable for various types of data, not just time-series.
+Manual Management: You must manage regular indices yourself, including creating new ones and handling rollovers.
+Key Differences
+Purpose: Data streams are specifically designed for time-series data, while regular indices are more general-purpose.
+Mutability: Data streams are append-only and do not allow updates or deletes to existing data, whereas regular indices allow full CRUD operations.
+Management: Data streams handle the rollover and management of underlying indices automatically, while regular indices require manual management.

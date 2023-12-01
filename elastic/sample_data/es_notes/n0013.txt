@@ -1,0 +1,88 @@
+basic, DSL query , term query, match query
+
+
+
+
+shaespeare mapping 
+
+{
+  "shakespeare" : {
+    "mappings" : {
+      "properties" : {
+        "line_id" : {
+          "type" : "integer"
+        },
+        "line_number" : {
+          "type" : "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
+        },
+        "play_name" : {
+          "type" : "keyword"
+        },
+        "speaker" : {
+          "type" : "keyword"
+        },
+        "speech_number" : {
+          "type" : "integer"
+        },
+        "text_entry" : {
+          "type" : "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
+        },
+        "type" : {
+          "type" : "text",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+
+
+#===========================================
+GET shakespeare/_search
+{
+  "query" : {
+    "term": {
+      "text_entry": {
+        "value": "king"
+      }
+    }
+  }
+}
+
+* term query is case sensitive, it has to be exact match the given term
+
+GET shakespeare/_search
+{
+  "query" : {
+    "match": {
+      "text_entry": "king"
+    }
+  }
+}
+
+* match query is NOT case sensitive
+#===========================================
+
+
+
+
+
+

@@ -1,0 +1,39 @@
+Use the udated by query API to update documents
+
+1 - Addresses index, create full address ,  use update by query to update EXISTING index
+
+2 - sales_data create avg price (total price / number of  product) ,use update by query to update EXISTING index
+
+
+
+
+
+===============================================================
+ Task #1  - Solution
+===============================================================
+POST addresses/_update_by_query
+{
+  "script": {
+    "source": """
+      ctx._source.full_address = ctx._source.NUMBER + ' ' + ctx._source.UNIT + ' ' + ctx._source.STREET +  ' ' + ctx._source.POSTCODE;
+    
+    
+    """,
+    "lang": "painless"
+  },
+  "query": {
+    "match_all": {}
+  }
+}
+
+
+GET addresses/_search
+
+ 
+
+
+
+
+===============================================================
+ Task #2  - Solution
+=============================================================== 

@@ -1,0 +1,164 @@
+certification, practice question
+
+
+
+Q : 两个索引,一个是earthquake索引,另一个是earthquaketype索引(有10条记录)。
+    对earthquake进行reindex得到task2索引,
+    要求task2包括earthquake的所有字段和值,
+    且所有earthquake中与earthquaketype中有对应关系的字段也包含在task2中。
+    类似于sql中的表 join关系。
+    使用pipeline的script processors,采用if的方式将10条记录全部与earthquake的数据匹配,一起reindex到task2中。
+
+
+    Sample data populated as below :
+
+POST _bulk
+{ "index": { "_index": "earthquaketype", "_id": "1" } }
+{ "type_id": 1, "description": "Minor" }
+{ "index": { "_index": "earthquaketype", "_id": "2" } }
+{ "type_id": 2, "description": "Light" }
+{ "index": { "_index": "earthquaketype", "_id": "3" } }
+{ "type_id": 3, "description": "Moderate" }
+{ "index": { "_index": "earthquaketype", "_id": "4" } }
+{ "type_id": 4, "description": "Strong" }
+{ "index": { "_index": "earthquaketype", "_id": "5" } }
+{ "type_id": 5, "description": "Major" }
+{ "index": { "_index": "earthquaketype", "_id": "6" } }
+{ "type_id": 6, "description": "Great" }
+{ "index": { "_index": "earthquaketype", "_id": "7" } }
+{ "type_id": 7, "description": "Severe" }
+{ "index": { "_index": "earthquaketype", "_id": "8" } }
+{ "type_id": 8, "description": "Intense" }
+{ "index": { "_index": "earthquaketype", "_id": "9" } }
+{ "type_id": 9, "description": "Devastating" }
+{ "index": { "_index": "earthquaketype", "_id": "10" } }
+{ "type_id": 10, "description": "Extreme" }
+
+
+POST _bulk
+{ "index": { "_index": "earthquake", "_id": "1" } }
+{ "location": "California", "magnitude": 3.5, "type_id": 1 }
+{ "index": { "_index": "earthquake", "_id": "2" } }
+{ "location": "Nevada", "magnitude": 4.2, "type_id": 2 }
+{ "index": { "_index": "earthquake", "_id": "3" } }
+{ "location": "Alaska", "magnitude": 5.1, "type_id": 3 }
+{ "index": { "_index": "earthquake", "_id": "4" } }
+{ "location": "Texas", "magnitude": 4.5, "type_id": 4 }
+{ "index": { "_index": "earthquake", "_id": "5" } }
+{ "location": "Florida", "magnitude": 3.8, "type_id": 5 }
+{ "index": { "_index": "earthquake", "_id": "6" } }
+{ "location": "New York", "magnitude": 4.0, "type_id": 6 }
+{ "index": { "_index": "earthquake", "_id": "7" } }
+{ "location": "Illinois", "magnitude": 4.3, "type_id": 7 }
+{ "index": { "_index": "earthquake", "_id": "8" } }
+{ "location": "Washington", "magnitude": 5.5, "type_id": 8 }
+{ "index": { "_index": "earthquake", "_id": "9" } }
+{ "location": "Oregon", "magnitude": 5.2, "type_id": 9 }
+{ "index": { "_index": "earthquake", "_id": "10" } }
+{ "location": "Georgia", "magnitude": 6.5, "type_id": 10 }
+
+
+
+
+
+
+
+
+******************************************************************
+
+
+PUT /_enrich/policy/earthquaketype_policy
+{
+  "match": {
+    "indices": "earthquaketype",
+    "match_field": "type_id",
+    "enrich_fields": ["description"]
+  }
+}
+
+POST /_enrich/policy/earthquaketype_policy/_execute
+
+PUT _ingest/pipeline/earthquake_join
+{
+  "description": "Join earthquake with earthquaketype",
+  "processors": [
+    {
+      "enrich": {
+        "policy_name": "earthquaketype_policy",
+        "field": "type_id",
+        "target_field": "type",
+        "ignore_missing": true
+      }
+    },
+    {
+      "rename": {
+        "field": "type.description",
+        "target_field": "description",
+        "ignore_missing": true
+      }
+    },
+    {
+      "remove": {
+        "field": "type",
+        "ignore_missing": true
+      }
+    }
+  ]
+}
+
+
+POST _reindex
+{
+  "source": {
+    "index": "earthquake"
+  },
+  "dest": {
+    "index": "task2",
+    "pipeline": "earthquake_join"
+  }
+}
+
+
+
+GET earthquake/_search
+GET task2/_search
+
+
+
+**************************************************************8
+or create pipeline without enrich policy 
+
+
+PUT _ingest/pipeline/earthquake_join
+{
+  "description": "Join earthquake with earthquaketype",
+  "processors": [
+    {
+      "script": {
+        "lang": "painless",
+        "source": """
+          def earthquakeType = [
+            ['type_id': 1, 'description': 'Minor'],
+            ['type_id': 2, 'description': 'Light'],
+            ['type_id': 3, 'description': 'Moderate'],
+            ['type_id': 4, 'description': 'Strong'],
+            ['type_id': 5, 'description': 'Major'],
+            ['type_id': 6, 'description': 'Great'],
+            ['type_id': 7, 'description': 'Severe'],
+            ['type_id': 8, 'description': 'Intense'],
+            ['type_id': 9, 'description': 'Devastating'],
+            ['type_id': 10, 'description': 'Extreme']
+          ];
+          for (item in earthquakeType) {
+            if (ctx.type_id == item.type_id) {
+              ctx.description = item.description;
+              break;
+            }
+          }
+        """
+      }
+    }
+  ]
+}
+
+

@@ -1,0 +1,23 @@
+POST _aliases
+{
+  "actions": [
+    {
+      "add": {
+        "index": "logs-nginx.access-prod",
+        "alias": "logs"
+      }
+    }
+  ]
+}
+
+POST _aliases
+{
+  "actions": [
+    {
+      "remove": {
+        "index": "logs-nginx.access-prod",
+        "alias": "logs"
+      }
+    }
+  ]
+}

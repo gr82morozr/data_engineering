@@ -1,0 +1,89 @@
+
+certification, practice question
+
+在clust1中配置ccr,远程连接cluster2中的index。 采用CCR的标准方法,remote cluster配置,role配置,fllow-index配置。
+注意：要记得kibana设定 license。
+
+Configure a cluster for cross-cluster search
+Implement cross-cluster replication
+
+
+
+
+
+
+=====================================================================
+
+On Leader cluster (Remote)
+
+
+POST /_security/role/leader_ccr_role
+{
+  "indices": [
+    {
+      "names": ["movies_data"],
+      "privileges": ["read", "monitor"]
+    }
+  ]
+}
+
+
+PUT /_security/user/leader-user
+{
+   "password" : "test-password",
+   "roles" : ["follower_ccr_role"], 
+   "full_name" : "Fan Yang",
+   "email" : "email@example.com",
+   "metadata" : {
+     "intelligence" : 7
+   }
+}
+---------------------------------------------------
+
+On Local cluster (Follower)
+
+POST /_security/role/follower_ccr_role
+{
+  "indices": [
+    {
+      "names": ["movies_data-follwer"],
+      "privileges": ["manage_follow_index", "read", "create_index", "write", "monitor"]
+    }
+  ]
+}
+
+PUT /_security/user/test-user
+{
+   "password" : "test-password",
+   "roles" : ["follower_ccr_role"], 
+   "full_name" : "Fan Yang",
+   "email" : "email@example.com",
+   "metadata" : {
+     "intelligence" : 7
+   }
+}
+
+
+PUT /_cluster/settings
+{
+  "persistent": {
+    "cluster": {
+      "remote": {
+        "leader-cluster": {
+          "seeds": ["es-a1:9300"]
+        }
+      }
+    }
+  }
+}
+
+
+GET _remote/info ==> make sure they are connected
+
+
+
+PUT /movies_data-follower/_ccr/follow
+{
+  "remote_cluster": "leader-cluster",
+  "leader_index": "movies_data"
+}

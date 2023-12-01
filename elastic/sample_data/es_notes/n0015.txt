@@ -1,0 +1,81 @@
+
+index template, component template , dynamic template
+
+
+*** index template - template based on certain INDEX NAME patterns.
+*** component template - just re-useable index template.
+*** dynamic template - MAPPING template based on FILED NAME patterns
+
+
+
+PUT _component_template/mysettings
+{
+  "template": {
+    "settings": {
+      "number_of_shards": 6
+    }
+  }
+}
+
+GET _component_template/mysettings
+
+
+PUT _index_template/student-template
+{
+  "index_patterns" : ["student-*"],
+  "composed_of" : ["mysettings"]
+}
+
+# =================================================
+!!! REMEMBER this !!!
+
+PUT my-dynamic-template-demo-index
+{
+  "mappings": {
+    "dynamic_templates" : [
+      { 
+        "string_as_ip": {
+          "match_mapping_type": "string",
+          "match" : "ip-*",
+          "runtime" : {
+            "type" : "ip"
+          }
+        }
+      },
+      
+      {
+        "convert_id_keyword" : {
+          "match_mapping_type" : "string",
+          "match" : "*-id",
+          "mapping" : {
+            "type" : "keyword"
+          }
+        }
+      }
+    ]
+  }
+}
+
+
+* "match_mapping_type": "string", the string is unmapped data type: 
+  possible values are [object, string, long, double, boolean, date, binary]"
+
+
+
+# =================================================
+
+dynamic template
+
+* c for creating mapping of field based on given pattern of the field name 
+for example string to IP
+
+
+
+---- Difference  ----
+1 - Dynamic templates are part of the mappings and are used to define custom mapping rules for fields that are dynamically added to the index. 
+2 - A component template, on the other hand, is a collection of settings, mappings, and possibly dynamic templates that can be reused across different index templates.
+
+
+
+
+

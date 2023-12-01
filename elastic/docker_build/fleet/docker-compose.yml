@@ -1,0 +1,69 @@
+version: "3.8"
+
+services:
+  fleet-svr:
+    image: docker.elastic.co/beats/elastic-agent:${ELK_VERSION:-8.8.2}
+    container_name: fleet-svr 
+    volumes:
+      - certs:/usr/share/elastic-agent/certs
+    networks:
+      - elastic_net
+    ports:
+      - 8220:8220 
+    environment:
+      # common env varibles
+      - ELASTICSEARCH_HOST=https://es-a1:9200
+      - ELASTICSEARCH_USERNAME=${ELASTIC_USERNAME:-elastic}
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-password}
+      - ELASTICSEARCH_CA=/usr/share/elastic-agent/certs/ca.crt
+      - KIBANA_HOST=https://kibana:5601
+      - KIBANA_CA=/usr/share/elastic-agent/certs/ca.crt
+      - KIBANA_USERNAME=${ELASTIC_USERNAME:-elastic}
+      - KIBANA_PASSWORD=${KIBANA_PASSWORD:-password}
+
+      #Prepare Kibana for Fleet
+      - KIBANA_FLEET_SETUP=true
+      - KIBANA_FLEET_HOST=https://kibana:5601
+      - KIBANA_FLEET_USERNAME=${ELASTIC_USERNAME:-elastic}
+      - KIBANA_FLEET_PASSWORD=${KIBANA_PASSWORD:-password}
+      - KIBANA_FLEET_CA=/usr/share/elastic-agent/certs/ca.crt
+
+      #Bootstrap Fleet Server
+      - ELASTIC_AGENT_TAGS=Fleet Server
+      - FLEET_ENROLL=true
+      - FLEET_SERVER_ENABLE=true
+      - FLEET_SERVER_ELASTICSEARCH_HOST=https://es-a1:9200
+      - FLEET_SERVER_ELASTICSEARCH_CA=/usr/share/elastic-agent/certs/ca.crt
+      - FLEET_SERVER_POLICY_NAME=${FLEET_SERVER_POLICY}
+      - FLEET_SERVER_POLICY_ID=${FLEET_SERVER_POLICY_ID}
+      - FLEET_SERVER_HOST=fleet-svr
+      - FLEET_SERVER_PORT=8220
+      - FLEET_SERVER_CERT=/usr/share/elastic-agent/certs/fleet-svr.crt
+      - FLEET_SERVER_CERT_KEY=/usr/share/elastic-agent/certs/fleet-svr.key
+      #- FLEET_SERVER_INSECURE_HTTP=true
+
+      #Enroll Elastic Agent
+      - FLEET_URL=https://fleet-svr:8220
+      - FLEET_CA=/usr/share/elastic-agent/certs/ca.crt
+      #- FLEET_INSECURE=true
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -k --cacert config/certs/ca/ca.crt https://fleet-svr:8220 | grep -q '404 page not found'"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+      
+volumes:
+  certs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ./certs
+
+networks:
+  elastic_net:
+    external: true

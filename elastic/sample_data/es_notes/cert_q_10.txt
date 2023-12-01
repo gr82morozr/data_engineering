@@ -1,0 +1,85 @@
+
+movie_data
+
+make search when search the against original_title, no result found
+
+
+
+
+
+
+
+
+
+
+
+=====================================================================
+Solution
+=====================================================================
+
+
+
+
+GET movie_data/_search
+{
+  "query": {
+    "match" : {
+      "original_title" : "the"
+    }
+  }
+}
+
+
+DELETE movie_data_reindex
+
+PUT movie_data_reindex
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "my_cusome_analyzer": {
+          "char_filter": [],
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "my_engliosh_stop_filter"
+          ]
+        }
+      },
+      "filter": {
+        "my_engliosh_stop_filter" : {
+          "type" : "stop",
+          "stopwords" : "_english_"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "original_title_analyzed" : {
+        "type" : "text",
+        "analyzer": "my_cusome_analyzer"
+      }
+    }
+  }
+}
+
+POST _reindex
+{
+  "source": {
+    "index": "movie_data"
+  },
+  "dest": {
+    "index": "movie_data_reindex"
+  }
+}
+
+
+GET movie_data_reindex/_search
+{
+  "query": {
+    "match" : {
+      "original_title_analyzed": "the"
+    }
+  }
+}

@@ -1,0 +1,104 @@
+
+certification, practice question
+
+3.根据已知索引,创建task3索引。让搜索yoo-hoo 和 yoohoo的结果一致。采用构建分词器,Yoo-Hoo -->YooHoo, -=> ,使用standard,filter选用lowercase
+
+
+
+
+=====================================================================
+
+
+PUT /task3
+{
+  "settings": {
+    "analysis": {
+      "char_filter": {
+        "replace_hyphens": {
+          "type": "mapping",
+          "mappings": [
+            "- => "
+          ]
+        }
+      },
+      "analyzer": {
+        "custom_yoohoo_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "char_filter": [
+            "replace_hyphens"
+          ],
+          "filter": [
+            "lowercase"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "name": {
+        "type": "text",
+        "analyzer": "custom_yoohoo_analyzer"
+      }
+    }
+  }
+}
+
+
+GET task3/_search
+{
+  "took" : 1,
+  "timed_out" : false,
+  "_shards" : {
+    "total" : 1,
+    "successful" : 1,
+    "skipped" : 0,
+    "failed" : 0
+  },
+  "hits" : {
+    "total" : {
+      "value" : 3,
+      "relation" : "eq"
+    },
+    "max_score" : 1.0,
+    "hits" : [
+      {
+        "_index" : "task3",
+        "_id" : "TzufC4oBbT9lpbuuRaTt",
+        "_score" : 1.0,
+        "_source" : {
+          "name" : "this is a test"
+        }
+      },
+      {
+        "_index" : "task3",
+        "_id" : "XDufC4oBbT9lpbuu4aTv",
+        "_score" : 1.0,
+        "_source" : {
+          "name" : "2. this is a test - Yoo-Hoo"
+        }
+      },
+      {
+        "_index" : "task3",
+        "_id" : "YDufC4oBbT9lpbuu8qQa",
+        "_score" : 1.0,
+        "_source" : {
+          "name" : "2. this is a test - YooHoo"
+        }
+      }
+    ]
+  }
+}
+
+
+Test/verify
+
+GET task3/_search
+{
+  "query" : {
+    "match" : {
+      "name": "yoohoo"
+    }
+  }
+}

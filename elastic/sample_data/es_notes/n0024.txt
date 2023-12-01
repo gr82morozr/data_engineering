@@ -1,0 +1,295 @@
+aggregations, agg, DSL, bucket aggregations, nested aggregations, sub aggregations
+
+==============================================
+Matric Aggregations
+==============================================
+Metric aggregations that calculate metrics, such as a sum or average, from field values.
+
+
+
+
+
+sum
+================================================
+GET sales_sample/_search
+{
+  "size": 0,
+  "aggs": {
+    "total-of-taxful_total_price": {
+      "sum": {
+        "field": "taxful_total_price"
+      }
+    }
+  }
+}
+
+avg
+================================================
+GET sales_sample/_search
+{
+  "size": 0,
+  "aggs": {
+    "avg-of-taxful_total_price": {
+      "avg": {
+        "field": "taxful_total_price"
+      }
+    }
+  }
+}
+
+
+max
+min 
+count - value_count : just simply count, NOT for returning distinct values
+stat 
+=============================================
+!!! So good give you all answers of min, max, avg, sum !!!
+
+GET sales_sample/_search
+{
+  "size": 0,
+  "aggs": {
+    "stats-of-taxful_total_price": {
+      "stats": {
+        "field": "taxful_total_price"
+      }
+    }
+  }
+}
+
+extended_stats
+============================================
+as above but with mmuch more statistic result, mainly for machine learning.
+
+
+
+
+cardinality
+=============================================
+!!! Return distinct value !!!
+
+GET sales_sample/_search
+{ "size" : 0,
+  "aggs": {
+    "distinct_customer_id": {
+      "cardinality": {
+        "field": "customer_id"
+      }
+    }
+  }
+}
+
+
+==============================================
+Bucket aggregations
+==============================================
+Bucket aggregations that group documents into buckets, also called bins, based on field values, ranges, or other criteria.
+
+
+
+
+histogram - similar to SQL group by
+
+
+GET sales_sample/_search
+{ "size" : 0,
+  "aggs": {
+    "date_histogram": {
+      "histogram": {
+        "field": "day_of_week_i",
+        "interval": 1
+      }
+    }
+  }
+}
+
+
+result is as below : 
+ "aggregations" : {
+    "date_histogram" : {
+      "buckets" : [
+        {
+          "key" : 0.0,        // the actual value of day_of_week_i
+          "doc_count" : 579   // the count of this bucket
+        },
+        {
+          "key" : 1.0,
+          "doc_count" : 609
+        },
+        {
+          "key" : 2.0,
+          "doc_count" : 592
+        },
+        {
+          "key" : 3.0,
+          "doc_count" : 775
+        },
+        {
+          "key" : 4.0,
+          "doc_count" : 770
+        },
+        {
+          "key" : 5.0,
+          "doc_count" : 736
+        },
+        {
+          "key" : 6.0,
+          "doc_count" : 614
+        }
+      ]
+    }
+  }
+----------------------------------
+  *** some specilized histogram ***
+
+  GET sales_sample/_search
+  { "size" : 0,
+    "aggs": {
+      "date_analysis": {
+        "date_histogram": { // not just basic histogram
+          "field": "order_date",
+          "calendar_interval" : "day"
+        }
+      }
+    }
+  }
+
+
+----------------------------------
+top N records based on count of given field.
+for example : give me the top 10 customers (customer_id) which has LOWEST sales records
+
+GET sales_sample/_search
+
+GET sales_sample/_search
+{
+  "size": 0,
+  "aggs" : {
+    "top_10_customer_id" : {
+      "terms": {
+        "field": "customer_id",
+        "size": 10,
+        "order": {
+          "_count": "asc"     // keep in mind of using _count
+        }
+      }
+    }
+  }
+}
+
+
+sub aggregations
+
+
+
+
+1 - For sample data, get daily total sales value
+
+GET sales_sample/_search
+{
+  "size" : 0,
+  "aggs": {
+    "sales_by_date": {
+      "date_histogram": {
+        "field": "order_date",
+        "calendar_interval": "day"    // remember using "calendar_interval"
+      },
+      "aggs": {
+        "daily_sales": {
+          "sum": {
+            "field": "taxful_total_price"
+          }
+        }
+      }
+    }
+  }
+}
+
+
+==============================================
+Pipeline aggregations
+==============================================
+Pipeline aggregations that take input from other aggregations instead of documents or fields.
+
+
+
+
+
+
+GET /flights/_search
+{
+  "size": 0,
+  "runtime_mappings": {
+    "flight_time_runtime": {
+      "type": "double",
+      "script": {
+        "source": "emit(doc['FlightTimeMin'].value + Double.parseDouble(doc['FlightTimeHour'].value) * 60)"
+      }
+    }
+  },
+  "aggs": {
+    "group_by_airlines": {
+      "terms": {
+        "field": "Carrier",
+        "size": 100
+      },
+      "aggs": {
+        "avg_air_time": {
+          "avg": {
+            "field": "flight_time_runtime"
+          }
+        },
+        "sort_avg": {
+          "bucket_sort": {
+            "sort": [
+              {
+                "avg_air_time": {
+                  "order": "desc"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+
+
+GET /flights/_search
+{
+  "size": 0,
+  "runtime_mappings": {
+    "flight_time_runtime": {
+      "type": "double",
+      "script": {
+        "source": "emit(doc['FlightTimeMin'].value + Double.parseDouble(doc['FlightTimeHour'].value) * 60)"
+      }
+    }
+  },
+  "aggs": {
+    "group_by_airlines": {
+      "terms": {
+        "field": "Carrier",
+        "size": 100
+      },
+      "aggs": {
+        "avg_air_time": {
+          "avg": {
+            "field": "flight_time_runtime"
+          }
+        }
+      }
+    },
+    "max_avg_sir_time": {
+      "max_bucket": {
+        "buckets_path": "group_by_airlines>avg_air_time"
+      }
+    }
+  }
+}
+
+
+
+

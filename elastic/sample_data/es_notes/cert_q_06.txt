@@ -1,0 +1,13 @@
+certification, practice question
+
+配置search template 模板，名为task7。
+要求a字段必须等于active，\
+date字段必须在{{startdate}}和{{enddate}}之间，
+还要对item字段进行{{itemquery}}搜索，
+其中{{enddate}}之默认为now。
+
+注意：默认字段设置，以及 使用 search template的方法，
+结果只需要填写 使用search template的search request，
+而非search template本身。
+
+
