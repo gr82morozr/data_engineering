@@ -1,1 +1,0 @@
-openssl genpkey -algorithm RSA -out /home/user1/apps/elasticsearch/docker_build/elk/a/elk-cluster_a/config/certs/ca.key
