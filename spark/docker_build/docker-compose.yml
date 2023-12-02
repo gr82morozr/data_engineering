@@ -2,19 +2,22 @@ version: '3'
 
 services:
   spark-master:
-    image: spark:latest
+    image: spark-jupyterlab
     container_name: spark-master
     hostname: spark-master
-    command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.master.Master -h spark-master"
+    command: /bin/bash -c "/opt/spark/start-master.sh"
     ports:
       - "8080:8080"
       - "7077:7077"    
+      - "8888:8888"
     networks:
       - spark-network
+    volumes:
+      - ./notebooks:/home/spark/notebooks 
     deploy:
       resources:
         limits:
-          memory: 2G      
+          memory: 4G 
     healthcheck:
       test: ["CMD-SHELL", "curl -s http://spark-master:8080 | grep -qE 'Spark Master at spark://spark-master:7077'"]
       interval: 10s
@@ -22,7 +25,7 @@ services:
       retries: 24
 
   spark-worker1:
-    image: spark:latest
+    image: spark-jupyterlab
     container_name: spark-worker1
     hostname: spark-worker1
     command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"
@@ -41,70 +44,42 @@ services:
       retries: 24
 
   spark-worker2:
-    image: spark:latest
+    image: spark-jupyterlab
     container_name: spark-worker2
     hostname: spark-worker2
-    command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"        
+    command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"
     networks:
       - spark-network
+    depends_on:
+      - spark-master
     deploy:
       resources:
         limits:
           memory: 2G      
-    depends_on:
-      - spark-master          
     healthcheck:
       test: ["CMD-SHELL", "curl -s http://spark-master:8080 | grep -qE 'Spark Master at spark://spark-master:7077'"]
       interval: 10s
       timeout: 240s
-      retries: 24
+      retries: 24      
 
   spark-worker3:
-    image: spark:latest
+    image: spark-jupyterlab
     container_name: spark-worker3
     hostname: spark-worker3
-    command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"            
+    command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"
     networks:
       - spark-network
+    depends_on:
+      - spark-master
     deploy:
       resources:
         limits:
           memory: 2G      
-    depends_on:
-      - spark-master          
     healthcheck:
       test: ["CMD-SHELL", "curl -s http://spark-master:8080 | grep -qE 'Spark Master at spark://spark-master:7077'"]
       interval: 10s
       timeout: 240s
-      retries: 24
-
-  jupyterlab:
-    image: jupyter/pyspark-notebook
-    container_name: jupyterlab
-    hostname: jupyterlab
-    ports:
-      - "8888:8888"
-    command: start-notebook.sh --NotebookApp.token=''
-    environment:
-      - NB_UID=1000
-      - NB_GID=1000
-      - SPARK_HOME=/usr/local/spark
-      - SPARK_MASTER=spark://spark-master:7077
-      - SPARK_OPTS=--driver-memory=2g --executor-memory=1g
-    volumes:
-      - ./notebooks:/home/jovyan/work
-    networks:
-      - spark-network
-    depends_on:
-      - spark-master      
-      - spark-worker1
-      - spark-worker2
-      - spark-worker3
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      retries: 24  
 
   zookeeper:
     image: wurstmeister/zookeeper
@@ -121,14 +96,16 @@ services:
       retries: 3
 
   kafka:
-    image: wurstmeister/kafka
+    image: bitnami/kafka:latest
     container_name: kafka
     hostname: kafka
     ports:
       - "9092:9092"
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: kafka
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CREATE_TOPICS: "test-topic:1:1"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -137,10 +114,11 @@ services:
     networks:
       - spark-network
     healthcheck:
-      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list | grep test-topic"]
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list | grep -q test-topic"]
       interval: 1m
       timeout: 10s
       retries: 3
+
 
 networks:
   spark-network:
