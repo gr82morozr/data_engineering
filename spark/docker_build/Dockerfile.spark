@@ -8,6 +8,7 @@ LABEL maintainer="gr82morozr@gmail.com"
 ARG SPARK_VERSION
 ARG HADOOP_VERSION
 ARG SCALA_VERSION
+ARG KAFKA_VERSION
 ENV SPARK_HOME=/opt/spark
 
 # For root
@@ -41,11 +42,15 @@ ENV PATH="$SPARK_HOME/bin:$PATH"
 RUN mkdir -p /home/spark/notebooks
 # Download and install Spark
                                                               
-RUN /bin/bash -c "wget https://dlcdn.apache.org/spark/spark-$SPARK_VERSION/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION-scala$SCALA_VERSION.tgz -O /tmp/spark.tgz"
+RUN /bin/bash -c "wget https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}-scala${SCALA_VERSION}.tgz -O /tmp/spark.tgz"
 RUN /bin/bash -c "cd /tmp && tar zxvf /tmp/spark.tgz"
-RUN /bin/bash -c "mv /tmp/spark-$SPARK_VERSION-bin-hadoop$HADOOP_VERSION-scala$SCALA_VERSION/*  $SPARK_HOME"
+RUN /bin/bash -c "mv /tmp/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}-scala${SCALA_VERSION}/*  $SPARK_HOME"
 RUN /bin/bash -c "wget https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_${SCALA_VERSION}/${SPARK_VERSION}/spark-sql-kafka-0-10_${SCALA_VERSION}-${SPARK_VERSION}.jar -O $SPARK_HOME/jars/spark-sql-kafka-0-10_${SCALA_VERSION}-${SPARK_VERSION}.jar"
-RUN /bin/bash -c "cp $SPARK_HOME/jars/spark-sql-kafka-0-10_${SCALA_VERSION}-${SPARK_VERSION}.jar $SPARK_HOME/jars/spark-kafka-connector.jar"
+RUN /bin/bash -c "wget https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/${KAFKA_VERSION}/kafka-clients-${KAFKA_VERSION}.jar -O $SPARK_HOME/jars/kafka-clients-${KAFKA_VERSION}.jar"
+RUN /bin/bash -c "wget https://repo1.maven.org/maven2/org/apache/spark/spark-streaming-kafka-0-10_${SCALA_VERSION}/${SPARK_VERSION}/spark-streaming-kafka-0-10_${SCALA_VERSION}-${SPARK_VERSION}.jar -O $SPARK_HOME/jars/spark-streaming-kafka-0-10_${SCALA_VERSION}-${SPARK_VERSION}.jar"
+RUN /bin/bash -c "wget https://repo1.maven.org/maven2/org/apache/commons/commons-pool2/2.12.0/commons-pool2-2.12.0.jar -O $SPARK_HOME/jars/commons-pool2-2.12.0.jar"
+RUN /bin/bash -c "wget https://repo1.maven.org/maven2/org/apache/spark/spark-token-provider-kafka-0-10_${SCALA_VERSION}/${SPARK_VERSION}/spark-token-provider-kafka-0-10_${SCALA_VERSION}-${SPARK_VERSION}.jar -O $SPARK_HOME/jars/spark-token-provider-kafka-0-10_${SCALA_VERSION}-${SPARK_VERSION}.jar"
+RUN /bin/bash -c "rm /tmp/spark.tgz"
 
 # Update conda
 # RUN conda update -n base -c defaults conda -y 
