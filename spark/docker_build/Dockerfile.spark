@@ -35,6 +35,7 @@ USER spark
 
 RUN /bin/bash -c "pip install --upgrade pip"
 RUN /bin/bash -c "pip install pyspark"
+RUN /bin/bash -c "pip install confluent_kafka"
 RUN /bin/bash -c "pip install jupyterlab --upgrade"
 
 # Update PATH for Spark

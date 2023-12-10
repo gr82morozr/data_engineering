@@ -1,0 +1,293 @@
+version: "3.8"
+
+services:
+
+  #
+  #  Elasticsearch Cluster
+  #
+  es-a1:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION:-8.8.2}
+    container_name: es-a1
+    hostname: es-a1
+    volumes:
+      - es_a1_data:/usr/share/elasticsearch/data
+      - es_a1_logs:/usr/share/elasticsearch/logs
+      - snapshots:/usr/share/elasticsearch/snapshots
+    networks:
+      - data-network
+    ports:
+      - 9200:9200
+    environment:
+      - node.name=es-a1
+      - cluster.name=${ES_CLUSTER:-elk-cluster}
+      - cluster.initial_master_nodes=es-a1
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=false
+      - xpack.security.authc.api_key.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.license.self_generated.type=${LICENSE:-basic}
+      - xpack.monitoring.collection.enabled=true 
+      - ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD:-password}
+      - path.repo=/usr/share/elasticsearch/snapshots
+      - node.attr.node_type=hot
+    mem_limit: ${MEM_LIMIT}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s -u ${ELASTIC_USERNAME}:${ELASTIC_PASSWORD}  http://es-a1:9200 | grep -q 'You Know, for Search'"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
+  kibana:
+    depends_on:
+      es-a1:
+        condition: service_healthy
+    image: docker.elastic.co/kibana/kibana:${ELK_VERSION:-8.8.2}
+    container_name: kibana
+    hostname: kibana
+    volumes:
+      - kibanadata:/usr/share/kibana/data
+    networks:
+      - data-network
+    ports:
+      - 5601:5601
+    environment:
+      - SERVERNAME=kibana
+      - ELASTICSEARCH_HOSTS=http://es-a1:9200
+      - ELASTICSEARCH_USERNAME=${KIBANA_USERNAME:-kibana_system}
+      - xpack.security.cookieName=${ES_CLUSTER:-elk-cluster}_5601
+      - ELASTICSEARCH_PASSWORD=${ELASTIC_PASSWORD:-password}
+      - SERVER_SSL_ENABLED=false
+      - ES_JAVA_OPTS=-Xms${ES_HEAP_SIZE:-2g} -Xmx${ES_HEAP_SIZE:-2g}
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_SECURITY_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+      - XPACK_REPORTING_ENCRYPTIONKEY=${ENCRYPTION_KEY}
+    mem_limit: ${MEM_LIMIT}
+  
+  
+  #
+  #  MongoDB
+  #
+      
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    hostname: mongodb
+    networks:
+      - data-network    
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_DB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_DB_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    hostname: mongo-express
+    depends_on:
+      - mongodb
+    networks:
+      - data-network        
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER}
+      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD}
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=${MONGO_DB_USER}
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_DB_PASSWORD}
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_URL=mongodb://${MONGO_DB_USER}:example@mongodb:27017/
+
+  #
+  #  Spark Cluster
+  #
+  spark-master:
+    image: spark_kafka_img:1.0
+    container_name: spark-master
+    hostname: spark-master
+    command: /bin/bash -c "/opt/spark/start_master.sh"
+    ports:
+      - "8080:8080"
+      - "7077:7077"    
+      - "8888:8888"
+    networks:
+      - data-network
+    volumes:
+      - ./notebooks:/home/spark/notebooks 
+    deploy:
+      resources:
+        limits:
+          memory: 4G 
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://spark-master:8080 | grep -qE 'Spark Master at spark://spark-master:7077'"]
+      interval: 10s
+      timeout: 240s
+      retries: 24
+  
+  spark-worker1:
+    image: spark_kafka_img:1.0
+    depends_on:
+      - spark-master
+    container_name: spark-worker1
+    hostname: spark-worker1
+    networks:
+      - data-network
+    command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"      
+
+  spark-worker2:
+    image: spark_kafka_img:1.0
+    depends_on:
+      - spark-master
+    container_name: spark-worker2
+    hostname: spark-worker2
+    networks:
+      - data-network
+    command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"      
+    
+    
+  #
+  #  Kafka Cluster
+  #
+  
+  zookeeper:
+    image: bitnami/zookeeper:${ZOOKEEPER_VERSION}
+    container_name: zookeeper
+    hostname: zookeeper
+    networks:
+      - data-network        
+    ports:
+      - 2181:2181
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181", "|", "grep", "imok"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+ 
+
+  kafka1:
+    image: bitnami/kafka:${KAFKA_VERSION}
+    container_name: kafka1
+    hostname: kafka1
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    networks:
+      - data-network        
+    ports:
+      - 9092:9092
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kafka-connect:
+    image: bitnami/kafka:${KAFKA_VERSION}
+    container_name: kafka-connect
+    hostname: kafka-connect
+    ports:
+      - 8083:8083    
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+      kafka1:
+        condition: service_healthy
+    networks:
+      - data-network        
+    volumes:
+      - './kafka/connect_config/connect-standalone.properties:/opt/bitnami/kafka/config/connect-standalone.properties'  
+    command: /opt/bitnami/kafka/bin/connect-standalone.sh /opt/bitnami/kafka/config/connect-standalone.properties
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  
+  kafkahq:
+    image: tchiotludo/akhq:${AKHQ_VERSION}
+    container_name: kafkahq
+    hostname: kafkahq
+    depends_on:
+      kafka1:
+        condition: service_healthy    
+    networks:
+      - data-network
+    ports:
+      - 8088:8080
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            kafka:
+              properties:
+                bootstrap.servers: "kafka1:9092"
+
+    
+
+volumes:
+  es_a1_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${CLUSTER_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a1/data
+  es_a1_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${CLUSTER_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a1/logs
+  kibanadata:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${CLUSTER_FOLDER}/${ES_CLUSTER:-elk-cluster}/kibana/data
+  snapshots:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${CLUSTER_FOLDER}/${ES_CLUSTER:-elk-cluster}/snapshots
+  mongodb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${CLUSTER_FOLDER}/${MONGO_ROOT}/data 
+  zookeeper_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${CLUSTER_FOLDER}/${ZOOKEEPER_ROOT}/data
+      
+  kafka_log:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device:  ${CLUSTER_FOLDER}/${KAFKA_ROOT}/log
+
+
+networks:
+  data-network:
+    external: true

@@ -7,7 +7,7 @@ services:
     volumes:
       - certs:/usr/share/elasticsearch/config/certs
     networks:
-      - elastic_net
+      - data-network
     user: "0"
     command: >
       bash -c '
@@ -104,7 +104,7 @@ services:
       - es_a1_logs:/usr/share/elasticsearch/logs
       - snapshots:/usr/share/elasticsearch/snapshots
     networks:
-      - elastic_net
+      - data-network
     ports:
       - 9200:9200
     environment:
@@ -158,7 +158,7 @@ services:
       - es_a2_logs:/usr/share/elasticsearch/logs
       - snapshots:/usr/share/elasticsearch/snapshots      
     networks:
-      - elastic_net
+      - data-network
     ports:
       - 9201:9200      
     environment:
@@ -212,7 +212,7 @@ services:
       - es_a3_logs:/usr/share/elasticsearch/logs
       - snapshots:/usr/share/elasticsearch/snapshots      
     networks:
-      - elastic_net
+      - data-network
     ports:
       - 9202:9200      
     environment:
@@ -268,7 +268,7 @@ services:
       - certs:/usr/share/kibana/config/certs
       - kibanadata:/usr/share/kibana/data
     networks:
-      - elastic_net
+      - data-network
     ports:
       - 5601:5601
     environment:
@@ -339,13 +339,15 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      o: bind
+      o: bindfile:///home/user1/apps/data_engineering/elastic/docker_build/elk/a/start.sh
+
       device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/es-a3/logs
   kibanadata:
     driver: local
     driver_opts:
       type: none
-      o: bind
+      o: bindfile:///home/user1/apps/data_engineering/elastic/docker_build/elk/a/build_elk.sh
+
       device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/kibana/data
   snapshots:
     driver: local
@@ -355,5 +357,5 @@ volumes:
       device:  ${ES_FOLDER}/${ES_CLUSTER:-elk-cluster}/snapshots
 
 networks:
-  elastic_net:
+  data-network:
     external: true
