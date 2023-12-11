@@ -157,6 +157,7 @@ services:
     command: /bin/bash -c "/opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077"      
     
     
+  
   #
   #  Kafka Cluster
   #
@@ -213,8 +214,10 @@ services:
     networks:
       - data-network        
     volumes:
-      - './kafka/connect_config/connect-standalone.properties:/opt/bitnami/kafka/config/connect-standalone.properties'  
-    command: /opt/bitnami/kafka/bin/connect-standalone.sh /opt/bitnami/kafka/config/connect-standalone.properties
+      - kafka_plugins:/opt/bitnami/kafka/plugins:ro
+      - './kafka/connect_config/connect-standalone.properties:/opt/bitnami/kafka/config/connect-standalone.properties' 
+      - './kafka/connect_config/mongo-sink.properties:/opt/bitnami/kafka/config/mongo-sink.properties' 
+    command: /opt/bitnami/kafka/bin/connect-standalone.sh /opt/bitnami/kafka/config/connect-standalone.properties /opt/bitnami/kafka/config/mongo-sink.properties
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/"]
       interval: 30s
@@ -286,6 +289,13 @@ volumes:
       type: none
       o: bind
       device:  ${CLUSTER_FOLDER}/${KAFKA_ROOT}/log
+
+  kafka_plugins:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${CLUSTER_FOLDER}/${KAFKA_ROOT}/plugins
 
 
 networks:

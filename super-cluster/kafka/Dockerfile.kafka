@@ -1,0 +1,45 @@
+# Use Bitnami Kafka as the base image
+FROM bitnami/kafka
+
+# Set environment variables for versions
+ENV KAFKA_MONGODB_CONNECTOR_VERSION="1.9.1" 
+ENV KAFKA_ELASTIC_CONNECTOR_VERSION="Y.Y.Y" 
+
+
+USER root
+
+# Install dependencies (if needed)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl \
+        unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+
+# Download and extract Kafka
+RUN mkdir $KAFKA_HOME \
+    && wget -q "https://downloads.apache.org/kafka/3.6.0/kafka_2.12-3.6.0.tgz" -O /tmp/kafka.tgz \
+    && tar -xzf /tmp/kafka.tgz --strip 1 -C $KAFKA_HOME \
+    && rm /tmp/kafka.tgz
+
+# Create the plugins directory
+RUN mkdir -p $KAFKA_CONNECT_PLUGINS_DIR
+
+# Download and install the MongoDB Kafka Sink Connector
+RUN wget -P $KAFKA_CONNECT_PLUGINS_DIR "https://repo1.maven.org/maven2/org/mongodb/kafka/mongo-kafka-connect/${KAFKA_MONGODB_CONNECTOR_VERSION}/mongo-kafka-connect-${KAFKA_MONGODB_CONNECTOR_VERSION}-all.jar"
+    
+
+# Download and install the Elasticsearch Kafka Connector
+RUN mkdir -p $KAFKA_CONNECT_PLUGINS_DIR/elasticsearch \
+    && wget -q "https://d1i4a15mxbxib1.cloudfront.net/api/plugins/confluentinc/kafka-connect-elasticsearch/versions/11.1.5/confluentinc-kafka-connect-elasticsearch-11.1.5.zip" -O elasticsearch-connector.zip \
+    && unzip -d $KAFKA_CONNECT_PLUGINS_DIR/elasticsearch elasticsearch-connector.zip \
+    && rm elasticsearch-connector.zip
+
+# Expose the Kafka Connect API port
+EXPOSE 8083
+
+# Set the working directory
+WORKDIR $KAFKA_HOME
+
+# Set the entrypoint to run Kafka Connect
+ENTRYPOINT ["connect-distributed.sh"]
+CMD ["config/connect-distributed.properties"]

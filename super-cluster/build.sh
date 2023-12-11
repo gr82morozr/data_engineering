@@ -112,7 +112,7 @@ docker build \
 --build-arg SCALA_VERSION=$SCALA_VERSION    \
 --build-arg KAFKA_VERSION=$KAFKA_VERSION    \
 --build-arg SPARK_UID=$SPARK_UID            \
--f ./Dockerfile.spark                       \
+-f ./spark/Dockerfile.spark                       \
 -t spark_kafka_img:1.0 .
 
 
@@ -126,12 +126,13 @@ mkdir -p ${CLUSTER_FOLDER}/${KAFKA_ROOT}/config
 mkdir -p ${CLUSTER_FOLDER}/${KAFKA_ROOT}/connect_config
 mkdir -p ${CLUSTER_FOLDER}/${KAFKA_ROOT}/data
 mkdir -p ${CLUSTER_FOLDER}/${KAFKA_ROOT}/log
+mkdir -p ${CLUSTER_FOLDER}/${KAFKA_ROOT}/plugins
 
-# ====================================================
-# Start Super Cluster
-# ====================================================
-#docker rmi -f kafka_connect_img
-#docker build -f ./Dockerfile.kafka -t kafka_connect_img:1.0 .
+
+#download plugin JARs
+wget https://repo1.maven.org/maven2/org/mongodb/kafka/mongo-kafka-connect/${KAFKA_MONGODB_CONNECTOR_VERSION}/mongo-kafka-connect-${KAFKA_MONGODB_CONNECTOR_VERSION}-all.jar \
+     -O ${CLUSTER_FOLDER}/${KAFKA_ROOT}/plugins/mongo-kafka-connect-${KAFKA_MONGODB_CONNECTOR_VERSION}-all.jar
+     
 
 
 
